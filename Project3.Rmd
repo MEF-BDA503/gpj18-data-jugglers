@@ -1,0 +1,68 @@
+---
+title: "Analysis of Equities in BIST30 Index (XU030 Index)"
+author: "Data Jugglers"
+date: "November 21, 2018"
+output: html_document
+---
+
+**1) Data Preparations**
+
+In this project, we are analyzing the BIST30 members as of November 2018. The data set consist of last price ad volume data of equities listed in BIST30 Index from January 2011 to November 2018.
+Firstly, 
+*we have examined the data structure and, 
+*made some little transformation in the columns of data frame.
+
+```{r}
+tmp<-tempfile(fileext=".xlsx")
+download.file("https://github.com/MEF-BDA503/gpj18-data-jugglers/blob/master/XU030_v2.xlsx?raw=true",destfile=tmp,mode='wb')
+library(readxl)
+bist30=read_xlsx(tmp)
+str(bist30)
+library(date)
+as.Date(bist30$Dates,format="%y-%m-%d")
+str(bist30$Dates)
+range(bist30$Dates)
+head(bist30)
+tail(bist30)
+```
+
+**2) Beta Analysis**
+**2-a)Normalization:
+Before starting beta analysis, we should normalize the data as we take date 01.01.2011 equals to 100 for all stocks' price.
+
+```{r}
+tmp<-tempfile(fileext=".xlsx")
+download.file("https://github.com/MEF-BDA503/gpj18-data-jugglers/blob/master/XU030_v2.xlsx?raw=true",destfile=tmp,mode='wb')
+library(readxl)
+bist30=read_xlsx(tmp)
+fun <- function (a) {a / a[[1]] * 100}
+x <- 62
+for (i in 2:60) { 
+  bist30[ , x] <- sapply(bist30[ , i], fun)
+  colnames(bist30)[x] <- paste(colnames(bist30)[i], "norm", sep = "_")
+  x = x + 1 
+  i= i + 2 
+}
+bist30_n=bist30[62:120]
+bist30_norm=cbind.data.frame(bist30[1],bist30_n)
+for (i in 3:60) { 
+  bist30_norm=subset.data.frame(bist30_norm, select = -i, drop = TRUE)
+  i=i+2
+}
+
+```
+
+
+We will divide the data into two groups, financial sector companies, reel sector companies. Then we will compare two groups according to the annual yields, and illustrate them by graphics for each year. 
+```{r}
+
+```
+
+**3) Volume Analysis**
+
+In the last part, we will make a simple volume-price analysis. In the context of volume analysis approach, we will calculate the 30 days moving average of last prices both backward and forward looking, and take the difference between of these two moving averages for each day. The biggest absolute values will give the sentiment of the market whether it is bullish or bearish. Then we will check afterwards of these days if the volume of these days increase significantly.
+
+```{r}
+
+```
+
