@@ -1,0 +1,83 @@
+---
+title: "Analysis of Equities in BIST30 Index (XU030 Index)"
+author: "Data Jugglers"
+date: "November 21, 2018"
+output: html_document
+---
+
+**1) Data Preparations**
+
+In this project, we are analyzing the BIST30 members as of November 2018. The data set consist of last price ad volume data of equities listed in BIST30 Index from January 2011 to November 2018.
+Firstly, 
+*we have examined the data structure and, 
+*made some little transformation in the columns of data frame.
+
+```{r}
+tmp<-tempfile(fileext=".xlsx")
+download.file("https://github.com/MEF-BDA503/gpj18-data-jugglers/blob/master/XU030_v2.xlsx?raw=true",destfile=tmp,mode='wb')
+library(readxl)
+bist30=read_xlsx(tmp)
+str(bist30)
+library(date)
+as.Date(bist30$Dates,format="%y-%m-%d")
+str(bist30$Dates)
+range(bist30$Dates)
+head(bist30)
+tail(bist30)
+```
+
+**2) Beta Analysis**
+**2-a)Normalization:
+Before starting beta analysis, we should normalize the data as we take date 01.01.2011 equals to 100 for all stocks' price.
+
+```{r}
+tmp<-tempfile(fileext=".xlsx")
+download.file("https://github.com/MEF-BDA503/gpj18-data-jugglers/blob/master/XU030_v2.xlsx?raw=true",destfile=tmp,mode='wb')
+library(readxl)
+bist30=read_xlsx(tmp)
+
+bist30 <- cbind(bist30, apply(bist30[seq(2,60,2)], 2, function (a) a / a[[1]] * 100))
+
+colnames(bist30)[62:91] <- paste(colnames(bist30[seq(2,60,2)]), "norm", sep = "_")
+
+head(bist30[62:90],10)
+
+```
+
+
+We will divide the data into two groups, financial sector companies, reel sector companies. Then we will compare two groups according to the annual yields, and illustrate them by graphics for each year. 
+```{r}
+
+```
+
+**3) K-Means Analysis**
+
+We have divided the dataset into two groups as financial sector companies and real sector companies. Now we will check whether this classification is true or not by using k-means.
+
+```{r}
+#we calculate the annual average of stocks.
+annual_average<- aggregate(bist30[,62:91], list(format(bist30$Dates, "%Y")), mean)
+View(annual_average)
+
+#get transpose of annual_average dataset. 
+transpose <- as.matrix(annual_average[,-1])
+rownames(transpose) <- annual_average[,1]
+annual_average <- t(transpose)
+View(annual_average)
+
+#lets define wcss(Within cluster sum of squares) vector. 
+wcss <- vector()
+
+#lets find the distance to the center for each predefined center numbers.
+for (i in 1:7) wcss[i] <- sum(kmeans(annual_average, i)$withinss)
+View(wcss)
+
+#lets determine the breakdown point of the wcss graph. 
+plot(1:7, wcss, type="l")
+
+#3 centers are the optimum number for centers.
+kmeans(annual_average, 3)
+
+```
+
+Consequently, we can assume Aselsan as an outlier, so the result of k-means match up with our first assumption (there are two groups in bist30 stock such as real sector and financial sector) with regards to group classification.
