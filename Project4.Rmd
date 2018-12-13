@@ -2,9 +2,17 @@
 title: "Analysis of Equities in BIST30 Index (XU030 Index)"
 author: "Data Jugglers"
 date: "November 21, 2018"
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: sandstone
+    highlight: kate
+    df_print: paged
 ---
-**0) Needed Libraries**
+
+# 1) Needed Libraries
+
 
 ```{r}
 
@@ -14,10 +22,14 @@ library(tidyr)
 library(reshape2)
 library(tidyverse)
 library(ggplot2)
+library(corrgram)
+library(corrplot)
 ```
 
 
-**1) Data Preparations**
+# 2) Data Preparations
+
+
 
 In this project, we are analyzing the BIST30 members as of November 2018. The data set consist of last price ad volume data of equities listed in BIST30 Index from January 2011 to November 2018.
 Firstly, 
@@ -46,8 +58,8 @@ head(bist30)
 tail(bist30)
 ```
 
-**2) Beta Analysis**
-**2-a)Normalization:
+# 3) Beta Analysis
+**Normalization**:
 Before starting beta analysis, we should normalize the data as we take date 01.01.2011 equals to 100 for all stocks' price.
 
 ```{r}
@@ -67,17 +79,15 @@ head(bist30[62:90],10)
 
 We will divide the data into two groups, financial sector companies, reel sector companies. Then we will compare two groups according to the annual yields, and illustrate them by graphics for each year. 
 
-# Correlation and Regression Analysis of Volume and Price
+# 4) Correlation and Regression Analysis of Volume and Price {.tabset}
 
-## 1. Correlation Tables for Normalized and Raw Data
+## 1) Correlation Tables for Normalized and Raw Data
 
-```{r}
-library(corrgram)
-library(corrplot)
+(tab content)
 
-```
 
-Corrgram is a good source for correlation table, we can see the desired relations between two values in table by looking the
+
+**Corrgram** is a good source for correlation table, we can see the desired relations between two values in table by looking the
 
 ```{r}
 bistCorr30 <- bist30[2:60]
@@ -87,10 +97,12 @@ corrgram(corrValuesTable,order=TRUE, lower.panel=panel.shade,
   main="Correlation Data in Volume-Price Order")
 ```
 
-Another correlation table for variables is provided by corrplot package. This is the visualization of it 
+Another correlation table for variables is provided by **corrplot** package. This is the visualization of it 
 
 ```{r}
-corrplot(corrValuesTable, method = "circle")
+corrplot(corrValuesTable, type = "upper", tl.pos = "td",
+         method = "circle", tl.cex = 0.5, tl.col = 'black',
+         order = "hclust", diag = FALSE)
 ```
 
 Another correlation relation could be seen between normalized prices as below.
@@ -105,10 +117,14 @@ corrgram(corrValuesPrices,order=TRUE, lower.panel=panel.shade,
 And corrplot version of it
 
 ```{r}
-corrplot(corrValuesPrices, method = "circle")
+corrplot(corrValuesPrices, type = "upper", tl.pos = "td",
+         method = "circle", tl.cex = 0.5, tl.col = 'black',
+         order = "hclust", diag = FALSE)
 ```
 
-## 2. The Correlation Values between Volume and Price
+## 2) The Correlation Values between Volume and Price
+
+(tab content)
 
 First we need company names vector for table
 
@@ -161,7 +177,7 @@ corrTable$variable <- NULL
 corrTable
 ```
 
-CorVec variable keeps the correlation values between prices and volumes . There are negative and positive values. The absolute value of correlation means the relationship of these two variables are more predictable and more meaningfull for future actions. Thus, investigating these correlation values could help for regression values to seek which stocks are the best for prediction.
+**CorVec** variable keeps the correlation values between prices and volumes . There are negative and positive values. The absolute value of correlation means the relationship of these two variables are more predictable and more meaningfull for future actions. Thus, investigating these correlation values could help for regression values to seek which stocks are the best for prediction.
 
 ```{r}
 theme_set(theme_bw())
@@ -181,11 +197,13 @@ Arranging to absolute values
 corrTable %>% arrange(desc(abs(value)))
 ```
 
-## 3.Linear Regression Model for Mostly Correlated Values
+## 3) Linear Regression Model for Mostly Correlated Values
+
+(tab content)
 
 We can analyze the first five company which have the highest correlation values of all.Thus, if we look at the above table we can see that:
 
-KRDMD is the first one
+**KRDMD** is the first one
 
 ```{r}
 ggplot(df, aes(df$KRDMD_Price, df$KRDMD_Volume)) + 
@@ -193,7 +211,7 @@ ggplot(df, aes(df$KRDMD_Price, df$KRDMD_Volume)) +
   geom_smooth(method="lm", se=F,color="blue")
 ```
 
-ASELS is the second one
+**ASELS** is the second one
 
 ```{r}
 ggplot(df, aes(df$ASELS_Price, df$ASELS_Volume)) + 
@@ -201,7 +219,7 @@ ggplot(df, aes(df$ASELS_Price, df$ASELS_Volume)) +
   geom_smooth(method="lm", se=F,color="blue")
 ```
 
-ASYAB is the third one
+**ASYAB** is the third one
 
 ```{r}
 ggplot(df, aes(df$ASYAB_Price, df$ASYAB_Volume)) + 
@@ -209,7 +227,7 @@ ggplot(df, aes(df$ASYAB_Price, df$ASYAB_Volume)) +
   geom_smooth(method="lm", se=F,color="blue")
 ```
 
-TTKOM is the forth one
+**TTKOM** is the forth one
 
 ```{r}
 ggplot(df, aes(df$TTKOM_Price, df$TTKOM_Volume)) + 
@@ -217,7 +235,7 @@ ggplot(df, aes(df$TTKOM_Price, df$TTKOM_Volume)) +
   geom_smooth(method="lm", se=F,color="blue")
 ```
 
-HALKB is the fifth one
+**HALKB** is the fifth one
 
 ```{r}
 ggplot(df, aes(df$HALKB_Price, df$HALKB_Volume)) + 
@@ -226,7 +244,7 @@ ggplot(df, aes(df$HALKB_Price, df$HALKB_Volume)) +
 ```
 
 
-And linear models for these stocks are
+And **linear models** for these stocks are
 
 ```{r}
 linearMod1 <- lm(df$KRDMD_Price ~ df$KRDMD_Volume, data=df)
@@ -242,7 +260,7 @@ summary(linearMod5)
 ```
 
 
-**3) K-Means Analysis**
+# 5) K-Means Analysis
 
 We have divided the dataset into two groups as financial sector companies and real sector companies. Now we will check whether this classification is true or not by using k-means.
 
@@ -272,7 +290,7 @@ kmeans(annual_average, 3)
 
 ```
 
-Consequently, we can assume Aselsan as an outlier, so the result of k-means match up with our first assumption (there are two groups in bist30 stock such as real sector and financial sector) with regards to group classification.
+Consequently, we can assume **Aselsan** as an outlier, so the result of k-means match up with our first assumption (there are two groups in bist30 stock such as real sector and financial sector) with regards to group classification.
 
 
 
