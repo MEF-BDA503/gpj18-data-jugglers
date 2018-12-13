@@ -9,13 +9,20 @@ output:
     theme: sandstone
     highlight: kate
     df_print: paged
+    fig_width: 11
+    fig_height: 7
+    fig_crop: false
+classoption: landscape
+geometry: margin=0in
 ---
 
 # 1) Needed Libraries
 
 
 ```{r}
-
+library(Hmisc)
+library(gridExtra)
+library(GGally)
 library(tibble)
 library(dplyr)
 library(tidyr)
@@ -83,9 +90,6 @@ We will divide the data into two groups, financial sector companies, reel sector
 
 ## 1) Correlation Tables for Normalized and Raw Data
 
-(tab content)
-
-
 
 **Corrgram** is a good source for correlation table, we can see the desired relations between two values in table by looking the
 
@@ -124,7 +128,6 @@ corrplot(corrValuesPrices, type = "upper", tl.pos = "td",
 
 ## 2) The Correlation Values between Volume and Price
 
-(tab content)
 
 First we need company names vector for table
 
@@ -171,11 +174,14 @@ corHalkb <- cor(df$HALKB_Price,df$HALKB_Volume)
 corVec <- c(corGaran,corSahol,corBimas,corArclk,corEregl,corYkbnk,corToaso,corTuprs,corKrdmd,corTtrak,corAsels,corIpeke,corKozaa,corAsyab,corEnkai,corKozal,corDohol,corIhlas,corKchol,corEgkyo,corTcell,corMgros,corSise,corIsctr,corVakbn,corAkbnk,corPetkm,corThyao,corTtkom,corHalkb )
 ```
 
+
 ```{r}
 corrTable <- melt(data.frame(companyNames ,corVec))
 corrTable$variable <- NULL
 corrTable
 ```
+
+
 
 **CorVec** variable keeps the correlation values between prices and volumes . There are negative and positive values. The absolute value of correlation means the relationship of these two variables are more predictable and more meaningfull for future actions. Thus, investigating these correlation values could help for regression values to seek which stocks are the best for prediction.
 
@@ -197,9 +203,84 @@ Arranging to absolute values
 corrTable %>% arrange(desc(abs(value)))
 ```
 
-## 3) Linear Regression Model for Mostly Correlated Values
 
-(tab content)
+
+## 3) General Template for Highly Correlated Values
+
+
+```{r}
+ggpairs(df, 
+        columns = c("KRDMD_Price","KRDMD_Volume","ASELS_Price","ASELS_Volume","ASYAB_Price","ASYAB_Volume","TTKOM_Price","TTKOM_Volume","HALKB_Price","HALKB_Volume"), 
+        upper = list(continuous = wrap("cor", 
+                                       size = 10)), 
+        lower = list(continuous = "smooth"))
+```
+
+## 4) Highly Correlated Price Values
+
+
+First, we need to see the relation of the price and volumes for each column.
+
+```{r}
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+    )
+}
+```
+
+```{r}
+corrData<-rcorr(as.matrix(df[,2:60]))
+generalCorData <- flattenCorrMatrix(corrData$r, corrData$P)
+generalCorData
+
+generalCorData$Names <- paste(generalCorData$row,generalCorData$column,sep= "&")
+
+```
+
+Comparison of the results between each column correlation values to related price-volume correlation values
+
+
+```{r}
+theme_set(theme_bw())
+
+generalCorData %>% arrange(desc(abs(cor))) %>%
+  filter(cor > 0.95) %>%
+ggplot( aes(x=Names, y=cor)) + 
+  geom_bar(stat="identity", width=.5, fill="tomato3") + 
+  labs(title="Ordered Bar Chart", 
+       subtitle="Correlation Values", 
+       caption="Correlation graph") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6))
+```
+
+```{r}
+generalCorData %>% arrange(desc(abs(cor))) %>%
+  filter(cor > 0.95) 
+```
+
+Let's draw these relations with **ggplot** library
+
+
+
+Result: So there is a highly correlation between some prices. Therefore, if there is relation, we can examine the predictions on these values.
+
+```{r}
+ggpairs(df, 
+        columns = c("ASELS_Price","PETKM_Price","EREGL_Price","SISE_Price","GARAN_Price","AKBNK_Price","TOASO_Price","KCHOL_Price","TUPRS_Price"), 
+        upper = list(continuous = wrap("cor", 
+                                       size = 10)), 
+        lower = list(continuous = "smooth"))
+```
+
+# Linear Models {.tabset}
+
+## 1) Linear Regression Model for Mostly Correlated Values
+
 
 We can analyze the first five company which have the highest correlation values of all.Thus, if we look at the above table we can see that:
 
@@ -243,20 +324,95 @@ ggplot(df, aes(df$HALKB_Price, df$HALKB_Volume)) +
   geom_smooth(method="lm", se=F,color="blue")
 ```
 
+## 2) Linear Regression Charts for These Highly Correlated Prices
+
+Let's plot them together with **grid** function
+
+**TOASO & KCHOL* is the first one
+
+```{r}
+g1 <- ggplot(df, aes(df$TOASO_Price, df$KCHOL_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**TUPRS & ASELS** is the second one
+
+```{r}
+g2 <- ggplot(df, aes(df$TUPRS_Price, df$ASELS_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**ASELS & PETKM** is the third one
+
+```{r}
+g3 <- ggplot(df, aes(df$ASELS_Price, df$PETKM_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**EREGL & SISE** is the forth one
+
+```{r}
+g4 <- ggplot(df, aes(df$EREGL_Price, df$SISE_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**GARAN & AKBNK** is the fifth one
+
+```{r}
+g5 <- ggplot(df, aes(df$GARAN_Price, df$AKBNK_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+Together their table is like this
+
+```{r}
+grid.arrange(g1, 
+             g2,
+             g3,
+             g4,
+             g5,
+             nrow=5)
+```
+
+## 3) Linear Models for These Highly Correlated Prices
+
+
+With **lm** function we can see the relation between data as linear model
+
+```{r}
+linearMod1_1 <- lm(df$TOASO_Price ~ df$KCHOL_Price, data=df)
+linearMod1_2 <- lm(df$TUPRS_Price ~ df$ASELS_Price, data=df)
+linearMod1_3 <- lm(df$ASELS_Price ~ df$PETKM_Price, data=df)
+linearMod1_4 <- lm(df$EREGL_Price ~ df$SISE_Price, data=df)
+linearMod1_5 <- lm(df$GARAN_Price ~ df$AKBNK_Price, data=df)
+summary(linearMod1_1)
+summary(linearMod1_2)
+summary(linearMod1_3)
+summary(linearMod1_4)
+summary(linearMod1_5)
+```
+
+## 4) Linear Models for These Specific Stocks
+
 
 And **linear models** for these stocks are
 
 ```{r}
-linearMod1 <- lm(df$KRDMD_Price ~ df$KRDMD_Volume, data=df)
-linearMod2 <- lm(df$ASELS_Price ~ df$ASELS_Volume, data=df)
-linearMod3 <- lm(df$ASYAB_Price ~ df$ASYAB_Volume, data=df)
-linearMod4 <- lm(df$TTKOM_Price ~ df$TTKOM_Volume, data=df)
-linearMod5 <- lm(df$HALKB_Price ~ df$HALKB_Volume, data=df)
-summary(linearMod1)
-summary(linearMod2)
-summary(linearMod3)
-summary(linearMod4)
-summary(linearMod5)
+linearMod2_1<- lm(df$KRDMD_Price ~ df$KRDMD_Volume, data=df)
+linearMod2_2 <- lm(df$ASELS_Price ~ df$ASELS_Volume, data=df)
+linearMod2_3 <- lm(df$ASYAB_Price ~ df$ASYAB_Volume, data=df)
+linearMod2_4 <- lm(df$TTKOM_Price ~ df$TTKOM_Volume, data=df)
+linearMod2_5 <- lm(df$HALKB_Price ~ df$HALKB_Volume, data=df)
+summary(linearMod2_1)
+summary(linearMod2_2)
+summary(linearMod2_3)
+summary(linearMod2_4)
+summary(linearMod2_5)
 ```
 
 
