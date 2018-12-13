@@ -4,6 +4,18 @@ author: "Data Jugglers"
 date: "November 21, 2018"
 output: html_document
 ---
+**0) Needed Libraries**
+
+```{r}
+
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(reshape2)
+library(tidyverse)
+library(ggplot2)
+```
+
 
 **1) Data Preparations**
 
@@ -12,12 +24,20 @@ Firstly,
 *we have examined the data structure and, 
 *made some little transformation in the columns of data frame.
 
+
 ```{r}
 tmp<-tempfile(fileext=".xlsx")
 download.file("https://github.com/MEF-BDA503/gpj18-data-jugglers/blob/master/XU030_v2.xlsx?raw=true",destfile=tmp,mode='wb')
 library(readxl)
 bist30=read_xlsx(tmp)
+
+```
+
+```{r}
 str(bist30)
+```
+
+```{r include=FALSE}
 library(date)
 as.Date(bist30$Dates,format="%y-%m-%d")
 str(bist30$Dates)
@@ -46,9 +66,181 @@ head(bist30[62:90],10)
 
 
 We will divide the data into two groups, financial sector companies, reel sector companies. Then we will compare two groups according to the annual yields, and illustrate them by graphics for each year. 
+
+# Correlation and Regression Analysis of Volume and Price
+
+## 1. Correlation Tables for Normalized and Raw Data
+
 ```{r}
+library(corrgram)
+library(corrplot)
 
 ```
+
+Corrgram is a good source for correlation table, we can see the desired relations between two values in table by looking the
+
+```{r}
+bistCorr30 <- bist30[2:60]
+corrValuesTable <- cor(bist30[2:60],bist30[2:60])
+corrgram(corrValuesTable,order=TRUE, lower.panel=panel.shade,
+  upper.panel=panel.pie, text.panel=panel.txt,
+  main="Correlation Data in Volume-Price Order")
+```
+
+Another correlation table for variables is provided by corrplot package. This is the visualization of it 
+
+```{r}
+corrplot(corrValuesTable, method = "circle")
+```
+
+Another correlation relation could be seen between normalized prices as below.
+
+```{r}
+corrValuesPrices <- cor(bist30[62:90],bist30[62:90])
+corrgram(corrValuesPrices,order=TRUE, lower.panel=panel.shade,
+  upper.panel=panel.pie, text.panel=panel.txt,
+  main="Correlation Data in Price Order")
+```
+
+And corrplot version of it
+
+```{r}
+corrplot(corrValuesPrices, method = "circle")
+```
+
+## 2. The Correlation Values between Volume and Price
+
+First we need company names vector for table
+
+```{r}
+companyNames <- c('GARAN','SAHOL','BIMAS','ARCLK','EREGL','YKBNK','TOASO','TUPRS','KRDMD','TTRAK','ASELS','IPEKE','KOZAA','ASYAB','ENKAI','KOZAL','DOHOL','IHLAS','KCHOL','EKGYO','TCELL','MGROS','SISE','ISCTR','VAKBN','AKBNK','PETKM','THYAO','TTKOM','HALKB')
+```
+
+
+After that, we can apply correlatio between all the prices and volumes.
+
+```{r}
+df <- bist30
+corGaran <- cor(df$GARAN_Price,df$GARAN_Volume)
+corSahol <- cor(df$SAHOL_Price,df$SAHOL_Volume)
+corBimas <- cor(df$BIMAS_Price,df$BIMAS_Volume)
+corArclk <- cor(df$ARCLK_Price,df$ARCLK_Volume)
+corEregl <- cor(df$EREGL_Price,df$EREGL_Volume)
+corYkbnk <- cor(df$`YKBNK _Price`,df$`YKBNK _Volume`)
+corToaso <- cor(df$TOASO_Price,df$TOASO_Volume)
+corTuprs <- cor(df$TUPRS_Price,df$TUPRS_Volume)
+corKrdmd <- cor(df$KRDMD_Price,df$KRDMD_Volume)
+corTtrak <- cor(df$TTRAK_Price,df$TTKOM_Volume)
+corAsels <- cor(df$ASELS_Price,df$ASELS_Volume)
+corIpeke <- cor(df$IPEKE_Price,df$IPEKE_Volume)
+corKozaa <- cor(df$KOZAA_Price,df$KOZAA_Volume)
+corAsyab <- cor(df$ASYAB_Price,df$ASYAB_Volume)
+corEnkai <- cor(df$ENKAI_Price,df$ENKAI_Volume)
+corKozal <- cor(df$KOZAL_Price,df$KOZAL_Volume)
+corDohol <- cor(df$DOHOL_Price,df$DOHOL_Volume)
+corIhlas <- cor(df$IHLAS_Price,df$IHLAS_Volume)
+corKchol <- cor(df$KCHOL_Price,df$KCHOL_Volume)
+corEgkyo <- cor(df$EKGYO_Price,df$EKGYO_Volume)
+corTcell <- cor(df$TCELL_Price,df$TCELL_Volume)
+corMgros <- cor(df$MGROS_Price,df$MGROS_Volume)
+corSise <- cor(df$SISE_Price,df$SISE_Volume)
+corIsctr <- cor(df$ISCTR_Price,df$ISCTR_Volume)
+corVakbn <- cor(df$VAKBN_Price,df$VAKBN_Volume)
+corAkbnk <- cor(df$AKBNK_Price,df$AKBNK_Volume)
+corPetkm <- cor(df$PETKM_Price,df$PETKM_Volume)
+corThyao <- cor(df$THYAO_Price,df$THYAO_Volume)
+corTtkom <- cor(df$TTKOM_Price,df$TTKOM_Volume)
+corHalkb <- cor(df$HALKB_Price,df$HALKB_Volume)
+
+corVec <- c(corGaran,corSahol,corBimas,corArclk,corEregl,corYkbnk,corToaso,corTuprs,corKrdmd,corTtrak,corAsels,corIpeke,corKozaa,corAsyab,corEnkai,corKozal,corDohol,corIhlas,corKchol,corEgkyo,corTcell,corMgros,corSise,corIsctr,corVakbn,corAkbnk,corPetkm,corThyao,corTtkom,corHalkb )
+```
+
+```{r}
+corrTable <- melt(data.frame(companyNames ,corVec))
+corrTable$variable <- NULL
+corrTable
+```
+
+CorVec variable keeps the correlation values between prices and volumes . There are negative and positive values. The absolute value of correlation means the relationship of these two variables are more predictable and more meaningfull for future actions. Thus, investigating these correlation values could help for regression values to seek which stocks are the best for prediction.
+
+```{r}
+theme_set(theme_bw())
+
+corrTable %>% arrange(desc(value)) %>%
+ggplot( aes(x=companyNames, y=value)) + 
+  geom_bar(stat="identity", width=.5, fill="tomato3") + 
+  labs(title="Ordered Bar Chart", 
+       subtitle="Correlation Values", 
+       caption="Correlation graph") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6))
+```
+
+Arranging to absolute values
+
+```{r}
+corrTable %>% arrange(desc(abs(value)))
+```
+
+## 3.Linear Regression Model for Mostly Correlated Values
+
+We can analyze the first five company which have the highest correlation values of all.Thus, if we look at the above table we can see that:
+
+KRDMD is the first one
+
+```{r}
+ggplot(df, aes(df$KRDMD_Price, df$KRDMD_Volume)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+ASELS is the second one
+
+```{r}
+ggplot(df, aes(df$ASELS_Price, df$ASELS_Volume)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+ASYAB is the third one
+
+```{r}
+ggplot(df, aes(df$ASYAB_Price, df$ASYAB_Volume)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+TTKOM is the forth one
+
+```{r}
+ggplot(df, aes(df$TTKOM_Price, df$TTKOM_Volume)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+HALKB is the fifth one
+
+```{r}
+ggplot(df, aes(df$HALKB_Price, df$HALKB_Volume)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+
+And linear models for these stocks are
+
+```{r}
+linearMod1 <- lm(df$KRDMD_Price ~ df$KRDMD_Volume, data=df)
+linearMod2 <- lm(df$ASELS_Price ~ df$ASELS_Volume, data=df)
+linearMod3 <- lm(df$ASYAB_Price ~ df$ASYAB_Volume, data=df)
+linearMod4 <- lm(df$TTKOM_Price ~ df$TTKOM_Volume, data=df)
+linearMod5 <- lm(df$HALKB_Price ~ df$HALKB_Volume, data=df)
+summary(linearMod1)
+summary(linearMod2)
+summary(linearMod3)
+summary(linearMod4)
+summary(linearMod5)
+```
+
 
 **3) K-Means Analysis**
 
@@ -81,3 +273,10 @@ kmeans(annual_average, 3)
 ```
 
 Consequently, we can assume Aselsan as an outlier, so the result of k-means match up with our first assumption (there are two groups in bist30 stock such as real sector and financial sector) with regards to group classification.
+
+
+
+
+
+
+
