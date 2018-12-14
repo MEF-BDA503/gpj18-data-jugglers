@@ -19,7 +19,9 @@ geometry: margin=0in
 # 1) Needed Libraries
 
 
-```{r}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T,
+                      results = "hide")
 library(Hmisc)
 library(gridExtra)
 library(GGally)
@@ -31,8 +33,27 @@ library(tidyverse)
 library(ggplot2)
 library(corrgram)
 library(corrplot)
+library(date)
+library(readxl)
 ```
 
+
+```{r analysis, results="markup"}
+library(Hmisc)
+library(gridExtra)
+library(GGally)
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(reshape2)
+library(tidyverse)
+library(ggplot2)
+library(corrgram)
+library(corrplot)
+library(date)
+library(readxl)
+
+```
 
 # 2) Data Preparations
 
@@ -47,7 +68,7 @@ Firstly,
 ```{r}
 tmp<-tempfile(fileext=".xlsx")
 download.file("https://github.com/MEF-BDA503/gpj18-data-jugglers/blob/master/XU030_v2.xlsx?raw=true",destfile=tmp,mode='wb')
-library(readxl)
+
 bist30=read_xlsx(tmp)
 
 ```
@@ -57,7 +78,6 @@ str(bist30)
 ```
 
 ```{r include=FALSE}
-library(date)
 as.Date(bist30$Dates,format="%y-%m-%d")
 str(bist30$Dates)
 range(bist30$Dates)
@@ -72,7 +92,6 @@ Before starting beta analysis, we should normalize the data as we take date 01.0
 ```{r}
 tmp<-tempfile(fileext=".xlsx")
 download.file("https://github.com/MEF-BDA503/gpj18-data-jugglers/blob/master/XU030_v2.xlsx?raw=true",destfile=tmp,mode='wb')
-library(readxl)
 bist30=read_xlsx(tmp)
 
 bist30 <- cbind(bist30, apply(bist30[seq(2,60,2)], 2, function (a) a / a[[1]] * 100))
@@ -328,7 +347,7 @@ ggplot(df, aes(df$HALKB_Price, df$HALKB_Volume)) +
 
 Let's plot them together with **grid** function
 
-**TOASO & KCHOL* is the first one
+**TOASO & KCHOL** is the first one
 
 ```{r}
 g1 <- ggplot(df, aes(df$TOASO_Price, df$KCHOL_Price)) + 
