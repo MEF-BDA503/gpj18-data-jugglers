@@ -35,6 +35,7 @@ library(corrgram)
 library(corrplot)
 library(date)
 library(readxl)
+library(knitr)
 ```
 
 
@@ -52,6 +53,8 @@ library(corrgram)
 library(corrplot)
 library(date)
 library(readxl)
+library(knitr)
+
 
 ```
 
@@ -105,7 +108,7 @@ head(bist30[62:90],10)
 
 We will divide the data into two groups, financial sector companies, reel sector companies. Then we will compare two groups according to the annual yields, and illustrate them by graphics for each year. 
 
-# 4) Correlation and Regression Analysis of Volume and Price {.tabset}
+# 4) Correlation and Regression Analysis of Volume and Price {.tabset .tabset-fade .tabset-pills}
 
 ## 1) Correlation Tables for Normalized and Raw Data
 
@@ -296,7 +299,7 @@ ggpairs(df,
         lower = list(continuous = "smooth"))
 ```
 
-# Linear Models {.tabset}
+# 5) Linear Models {.tabset .tabset-fade .tabset-pills}
 
 ## 1) Linear Regression Model for Mostly Correlated Values
 
@@ -435,11 +438,11 @@ summary(linearMod2_5)
 ```
 
 
-# 5) K-Means Analysis
+# 6) K-Means Analysis
 
 We have divided the dataset into two groups as financial sector companies and real sector companies. Now we will check whether this classification is true or not by using k-means.
 
-```{r}
+```{r echo=TRUE}
 #we calculate the annual average of stocks.
 annual_average<- aggregate(bist30[,62:91], list(format(bist30$Dates, "%Y")), mean)
 View(annual_average)
@@ -463,11 +466,54 @@ plot(1:7, wcss, type="l")
 #3 centers are the optimum number for centers.
 kmeans(annual_average, 3)
 
+
 ```
+
+
+
+## 1) Cluster Table
+
+Structuring the table for **kmeans**.
+
+```{r}
+c1 <- companyNames
+c2 <- c(3,3,2,2,2,3,2,2,2,2,1,3,3,3,3,3,3,3,2,3,3,3,2,3,3,3,2,2,3,3)
+clusterFrame <- melt(data.frame(c1,c2))
+clusterFrame$variable <- NULL
+names(clusterFrame) <- c("Companies","Groups")
+
+```
+
+```{r echo = FALSE, results = 'asis'}
+kable(clusterFrame,caption = "Kmeans Cluster Table")
+
+```
+
+
+```{r}
+ggplot(clusterFrame, aes(x =Groups , y = seq(1,30,1), colour = Groups,fill = Groups)) + geom_text(label = clusterFrame$Companies) + 
+  xlab(label = "Numbers of Groups") +
+  ylab(label = "Seperation according to Sequence") 
+```
+          
+      
+
+## 2) Sum of Squares
+
+$$\frac{betweenSS}{totalSS} = 87.5 $$
+
+
 
 Consequently, we can assume **Aselsan** as an outlier, so the result of k-means match up with our first assumption (there are two groups in bist30 stock such as real sector and financial sector) with regards to group classification.
 
+# 7) References
 
+[1] - Correlation Graphs [link](https://www.datacamp.com/community/blog/r-correlation-tutorial)
+
+[2] - Correlation Graphs 
+[link](https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html)
+
+[3] - General Graphs [link](http://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html)
 
 
 
