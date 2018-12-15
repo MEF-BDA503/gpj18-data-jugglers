@@ -150,6 +150,7 @@ corrplot(corrValuesPrices, type = "upper", tl.pos = "td",
 
 ## 2) The Correlation Values between Volume and Price
 
+We should investigate that is there any meaningful connection between volume values and price values. If there is, we can assuma some predictions about company stock's volumes or prices from another.
 
 First we need company names vector for table
 
@@ -301,10 +302,10 @@ ggpairs(df,
 
 # 5) Linear Models {.tabset .tabset-fade .tabset-pills}
 
-## 1) Linear Regression Model for Mostly Correlated Values
+## 1) Linear Regression Model for Mostly Correlated Volume-Price Values
 
 
-We can analyze the first five company which have the highest correlation values of all.Thus, if we look at the above table we can see that:
+We can analyze the first five company which have the highest correlation volume-price relation values of all.Thus, if we look at the correlation table of volume-price relation, we can see that:
 
 **KRDMD** is the first one
 
@@ -419,6 +420,34 @@ summary(linearMod1_4)
 summary(linearMod1_5)
 ```
 
+Formula Model 1: $-7.17270  + 2.13500 * X$
+
+Adjusted R-squared:  $0.9331$
+
+
+Formula Model 2: $36.75406  + 2.90503 * X$
+
+Adjusted R-squared:  $0.9238$
+
+
+Formula Model 3: $-5.34984  + 5.29687 * X$
+
+Adjusted R-squared:  $0.9141$
+
+
+Formula Model 4: $-2.34248  + 2.44400 * X$
+
+Adjusted R-squared:  $0.9108$
+
+
+Formula Model 5: $-0.41338  + 1.08461 * X$
+
+Adjusted R-squared:  $0.9101$
+
+
+The Adjusted R-squared values are really high. That's why, we can say that, the prediction made between prices are highly elective and measurable.
+
+
 ## 4) Linear Models for These Specific Stocks
 
 
@@ -436,6 +465,33 @@ summary(linearMod2_3)
 summary(linearMod2_4)
 summary(linearMod2_5)
 ```
+
+Formula Model 1: $8.495e-01 + 1.624e-08 * X$
+
+Adjusted R-squared: $0.4025$
+
+
+Formula Model 2: $7.391e+00 + 5.014e-07 * X$
+
+Adjusted R-squared: $0.2563$
+
+
+Formula Model 3: $1.183e+00 + 2.132e-08 * X$
+
+Adjusted R-squared: $0.1787$
+
+
+Formula Model 4: $6.662e+00 + -2.370e-08 * X$
+
+Adjusted R-squared: $0.1714$
+
+
+Formula Model 5: $1.375e+01 + -6.544e-08 * X$
+
+Adjusted R-squared: $0.1586$
+
+
+The adjusted R-squared values are really high for volume-price relationship of same companies' stock. That's why, we can say that, the volume and price predictions are not reliable and not greatly measurable.
 
 
 # 6) K-Means Analysis
@@ -515,6 +571,10 @@ Consequently, we can assume **Aselsan** as an outlier, so the result of k-means 
 
 [3] - General Graphs [link](http://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html)
 
+[4] - Math formulas for R Markdown [link](https://www.calvin.edu/~rpruim/courses/s341/S17/from-class/MathinRmd.html)
+
+[5] - R Markdown Style 
+[link](https://bookdown.org/yihui/rmarkdown/html-document.html)
 
 
 
