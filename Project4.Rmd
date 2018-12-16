@@ -608,10 +608,10 @@ We can find the max and min values of prices and calculate the measure of it. Th
 
 ```{r}
 
-maxVal <- df1 %>% summarise_all(funs(max)) %>%
+maxVal <- df1 %>% summarise_all("max") %>%
   select(matches("norm")) 
 
-minVal <- df2 %>% summarise_all(funs(min)) %>%
+minVal <- df2 %>% summarise_all("min") %>%
   select(matches("norm"))
 
 
@@ -678,7 +678,82 @@ Correlation: $-0.09753649$
 
 The information about companies and their stocks' purchase has a correlation nearly -0.1 which is too low to guess about it. That's why, economic values of companies are not good parameter for price predictions.
 
-# 8) Conclusion
+# 8) General Comperasion of Two Sector Banks and Others
+
+First of all, we select the 6 banks from banking sector
+
+```{r}
+names(bist30)
+bankStocks <- c("GARAN_Price_norm","VAKBN_Price_norm","AKBNK_Price_norm","YKBNK _Price_norm","ASYAB_Price_norm","HALKB_Price_norm","ISCTR_Price_norm")
+
+```
+
+
+Selecting from bist30 data table as made below
+
+```{r}
+newbist30 = bist30[,62:91]
+selectedComp1 <- newbist30[,bankStocks]
+selectedComp2 <- newbist30[ , !(names(newbist30) %in% bankStocks)]
+totalComp <- newbist30 %>% select(matches("norm"))
+selectedComp2
+```
+
+Afer that, transpozing the vales help to summarise the values.
+
+```{r}
+selectedComp2 <-  as.data.frame(t(selectedComp2))
+selectedComp1 <-  as.data.frame(t(selectedComp1))
+totalComp <- as.data.frame(t(totalComp))
+names(selectedComp2) <- bist30$Dates
+names(selectedComp1) <- bist30$Dates
+names(totalComp) <- bist30$Dates
+selectedComp1
+```
+
+As you can see we summarise the values of normalized prices
+
+```{r}
+meanVal1 <- selectedComp1 %>% summarise_all(mean) 
+meanVal2 <- selectedComp2 %>% summarise_all(mean)
+Totalmean <- totalComp %>% summarise_all(mean)
+```
+
+Then,naming and again transposing data to visualize in normal form
+
+```{r}
+newValue1<- as.data.frame(t(meanVal1))
+newValue2 <- as.data.frame(t(meanVal2))
+totalValue <-  as.data.frame(t(Totalmean))
+names(newValue1) <- "Prices1"
+names(newValue2) <- "Prices2"
+names(totalValue) <- "TotalPrices"
+```
+
+Merging this data tables helps us to generate a mean table for sector and general companies.
+
+```{r}
+CompanyPrices <-data.frame(bist30$Dates,newValue1$Prices1,newValue2$Prices2,totalValue$TotalPrices)
+names(CompanyPrices) <- c("Dates","bankSectorPrices","OtherPrices","TotalPrices")
+CompanyPrices
+```
+
+The normalized prices of groups to the years
+
+
+```{r}
+ggplot(CompanyPrices, aes(x = Dates)) + 
+  geom_line(aes(y = bankSectorPrices, colour = "bankSectorPrices")) +
+  geom_line(aes(y = OtherPrices, colour = "OtherPrices")) +
+  geom_line(aes(y = TotalPrices, colour = "TotalPrices")) +
+  xlab("Years") + ylab("Normalized Prices")
+```
+
+
+After all, banking sector is below of the other sectors by means of price values.
+
+
+# 9) Conclusion
 
   * Kmeans shows us which prices have highly momentum and which prices have lower momentum. Aselsan is the outlier because of its highly increase in price to the normalized value. Then, group 2 have high momenum then 3 group. We can deduce that, group 1 and group 2 stocks would be the best options for inverstors to get high income return.
   
@@ -695,8 +770,9 @@ The information about companies and their stocks' purchase has a correlation nea
   
   * There are highly capable and successfull investors and other type investors. If higher investment capacity investors use their money in highly production companies, than TUPRAS result is not suprising. Another low capital investor just triggers the Volume and that's why information about Garanti and others could be manuplative If we focus the price changes.
   
+  * The banking sector is below the averages of other sectors such as heavy industry and similar company stocks. This is according to economic volume of companies and generally this banks belongs main companies which focuses on other sectors as KOC,SABANCI etc. This companies creates banks in order to supply their main job area. That's why we cannot expect that the stocks of their banks could be higher than their heavy industry companies logically.
    
-# 9) References
+# 10) References
 
 [1] - Correlation Graphs [link](https://www.datacamp.com/community/blog/r-correlation-tutorial)
 
@@ -710,6 +786,11 @@ The information about companies and their stocks' purchase has a correlation nea
 [5] - R Markdown Style 
 [link](https://bookdown.org/yihui/rmarkdown/html-document.html)
 
+[6] - Merging line plots 
+[link](https://stackoverflow.com/questions/3777174/plotting-two-variables-as-lines-using-ggplot2-on-the-same-graph)
 
+[7] - Column drop options
+[link](https://stackoverflow.com/questions/4605206/drop-data-frame-columns-by-name)
 
-
+[8] - Summarising the total columns
+[link](https://dplyr.tidyverse.org/reference/summarise_all.html)
