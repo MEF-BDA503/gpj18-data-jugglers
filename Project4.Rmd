@@ -22,6 +22,7 @@ geometry: margin=0in
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T,
                       results = "hide")
+library(shiny)
 library(Hmisc)
 library(gridExtra)
 library(GGally)
@@ -40,6 +41,7 @@ library(knitr)
 
 
 ```{r analysis, results="markup"}
+library(shiny)
 library(Hmisc)
 library(gridExtra)
 library(GGally)
@@ -54,8 +56,6 @@ library(corrplot)
 library(date)
 library(readxl)
 library(knitr)
-
-
 ```
 
 # 2) Data Preparations
@@ -552,7 +552,6 @@ ggplot(clusterFrame, aes(x =Groups , y = seq(1,30,1), colour = Groups,fill = Gro
   ylab(label = "Seperation according to Sequence") 
 ```
           
-      
 
 ## 2) Sum of Squares
 
@@ -562,7 +561,74 @@ $$\frac{betweenSS}{totalSS} = 87.5 $$
 
 Consequently, we can assume **Aselsan** as an outlier, so the result of k-means match up with our first assumption (there are two groups in bist30 stock such as real sector and financial sector) with regards to group classification.
 
-# 7) References
+
+# 7) Comperasion of Company Stocks
+
+## 1) Price Momentums 
+
+We can measure the change in momentums by looking last and first 3 months average differences. The differences between last and first can show us what the price momentum would be beneficial if we purchase these stocks at 2011.
+
+```{r}
+df1 <- head(bist30,n= 90)
+df2 <- tail(bist30,n= 90)
+
+averageFirst <- df1 %>% summarise_at(names(df), mean, na.rm = TRUE) %>%
+  select(matches("price")) 
+averageLast <- df2 %>% summarise_at(names(df), mean, na.rm = TRUE) %>%
+  select(matches("price"))
+
+momentums <- averageLast - averageFirst
+
+```
+
+First, we should combine the company names and momentums
+
+```{r}
+df_momentums <-  as.data.frame(t(momentums))
+momentumTable <-melt(data.frame(companyNames ,df_momentums))
+momentumTable$variable <- NULL
+momentumTable$companyNames <- paste(momentumTable$companyNames,"Momentum",sep= "&")
+momentumTable %>% arrange(desc(value))
+
+```
+
+Lets visualize this
+
+```{r}
+
+momentumTable %>%
+  arrange(desc(value)) %>%
+  ggplot(data = ., aes(x = reorder(companyNames, value), y = value, 
+    fill = companyNames, color = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
+```
+
+## 2) Economic Volume of Companies
+
+The geometric average of volume and price can show us the economic value of companies. Thus, we can calculate this value and compare the companies by this.
+
+```{r}
+df_volume <- bist30 %>% summarise_at(names(bist30), mean, na.rm = TRUE) %>%
+  select(matches("Volume")) 
+
+df_prices <- bist30 %>% summarise_at(names(bist30), mean, na.rm = TRUE) %>%
+  select(matches("Volume")) 
+volumes <- as.data.frame(t(df_volume))
+prices <- as.data.frame(t(df_prices))
+economicValue <- data.frame(companyNames,sqrt(volumes*prices))
+economicValue
+```
+
+Visualization of this data frame
+
+```{r}
+economicValue %>%
+  arrange(desc(V1)) %>%
+  ggplot(data = ., aes(x = reorder(companyNames, V1), y = V1, 
+    fill = companyNames, color = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
+```
+
+
+# 8) References
 
 [1] - Correlation Graphs [link](https://www.datacamp.com/community/blog/r-correlation-tutorial)
 
