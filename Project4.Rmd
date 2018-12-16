@@ -572,9 +572,9 @@ We can measure the change in momentums by looking last and first 3 months averag
 df1 <- head(bist30,n= 90)
 df2 <- tail(bist30,n= 90)
 
-averageFirst <- df1 %>% summarise_at(names(df1), mean, na.rm = TRUE) %>%
+averageFirst <- df1[0:61] %>% summarise_at(names(df1[0:61]), mean, na.rm = TRUE) %>%
   select(matches("price")) 
-averageLast <- df2 %>% summarise_at(names(df2), mean, na.rm = TRUE) %>%
+averageLast <- df2[0:61] %>% summarise_at(names(df2[0:61]), mean, na.rm = TRUE) %>%
   select(matches("price"))
 
 momentums <- averageLast - averageFirst
