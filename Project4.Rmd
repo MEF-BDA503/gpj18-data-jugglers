@@ -572,13 +572,13 @@ We can measure the change in momentums by looking last and first 3 months averag
 df1 <- head(bist30,n= 90)
 df2 <- tail(bist30,n= 90)
 
-averageFirst <- df1 %>% summarise_at(names(df), mean, na.rm = TRUE) %>%
+averageFirst <- df1 %>% summarise_at(names(df1), mean, na.rm = TRUE) %>%
   select(matches("price")) 
-averageLast <- df2 %>% summarise_at(names(df), mean, na.rm = TRUE) %>%
+averageLast <- df2 %>% summarise_at(names(df2), mean, na.rm = TRUE) %>%
   select(matches("price"))
 
 momentums <- averageLast - averageFirst
-
+momentums
 ```
 
 First, we should combine the company names and momentums
@@ -607,15 +607,15 @@ momentumTable %>%
 The geometric average of volume and price can show us the economic value of companies. Thus, we can calculate this value and compare the companies by this.
 
 ```{r}
-df_volume <- bist30 %>% summarise_at(names(bist30), mean, na.rm = TRUE) %>%
+df_volume <- bist30[0:61] %>% summarise_at(names(bist30[0:61]), mean, na.rm = TRUE) %>%
   select(matches("Volume")) 
 
-df_prices <- bist30 %>% summarise_at(names(bist30), mean, na.rm = TRUE) %>%
-  select(matches("Volume")) 
+df_prices <- bist30[0:61]%>% summarise_at(names(bist30[0:61]), mean, na.rm = TRUE) %>%
+  select(matches("Price")) 
+
 volumes <- as.data.frame(t(df_volume))
 prices <- as.data.frame(t(df_prices))
 economicValue <- data.frame(companyNames,sqrt(volumes*prices))
-economicValue
 ```
 
 Visualization of this data frame
@@ -627,8 +627,38 @@ economicValue %>%
     fill = companyNames, color = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
 ```
 
+## 3) Correlation of Economic Value and Momentums
 
-# 8) References
+```{r eval=FALSE, include=FALSE}
+cor(economicValue$V1,momentumTable$value)
+```
+
+**cor(economicValue,momentumTable)**
+
+Correlation: $-0.09753649$
+
+
+The information about companies and their stocks' purchase has a correlation nearly -0.1 which so too low to guess about it. That's why, economic values of companies are not good parameter for price predictions.
+
+# 8) Conclusion
+
+  * Kmeans shows us which prices are have highly momentum and which prices have lower momentum. Aselsan is the outlier because of its highly increase in price to the normalized value. Then, group 2 have high momenum then 3 group. We can deduce that, group 1 and group 2 stocks would be the best options for inverstors to get high income return.
+  
+  * ASELS and KRDMD have higher correlation with their volume which means they are related with their purchase willingleness of their stocks. We can assuma that, some inverstors predicted that their prices would get higher.
+  
+  * The price correlation shows that some investors can find relation between stocks which have highly momentum and which don't require the highly but have correlation so that they predict others price changes.
+  TUPRS & ASELS, ASELS & PETKM,EREGL & SISE,TOASO & KCHOL have higher momentum than average. EREGL has the a high momentum but SISE has not. However, some inverstor can predict SISE's prices by EREGL and collect this stock in their portfolio.
+  
+  * The product of volume-price which is similary their geometric average could shows us the economic value of companies. For example, GARANTI BANK reached the most valuable BANK in 3. quarter in this year. This information shows the market share of companies similarly regarless of their price momentum. That's why, investors use this information to predict price changes. However, If we look at
+  
+  * As it is mentioned, economic value of a company and the price changes are not correlated. That's why, the information about these area not properly truthful for investment.
+  
+  * Another information is, TUPRAS A.S and other heavy industry companies have high economic value but stock market cannot show this value when we look at the geometric average, because there is a posibility that the rising companies market their values higher than normally high companies. 
+  
+  * There are highly capable and successfull investors and other type investors. If higher investment capacity investors use their money in highly production companies, than TUPRAS result is not suprising. Another low capital investor just triggers the Volume and that's why information about Garanti and others could be manuplative If we focus the price changes.
+  
+   
+# 9) References
 
 [1] - Correlation Graphs [link](https://www.datacamp.com/community/blog/r-correlation-tutorial)
 
