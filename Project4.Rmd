@@ -577,7 +577,7 @@ averageFirst <- df1[0:61] %>% summarise_at(names(df1[0:61]), mean, na.rm = TRUE)
 averageLast <- df2[0:61] %>% summarise_at(names(df2[0:61]), mean, na.rm = TRUE) %>%
   select(matches("price"))
 
-momentums <- averageLast - averageFirst
+momentums <- (averageLast - averageFirst) / averageFirst
 momentums
 ```
 
@@ -602,7 +602,45 @@ momentumTable %>%
     fill = companyNames, color = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
 ```
 
-## 2) Economic Volume of Companies
+## 2) Possible Highest Income Measure
+
+We can find the max and min values of prices and calculate the measure of it. This will show us the a possible income for investor how to reach a maxiumum profit.
+
+```{r}
+
+maxVal <- df1 %>% summarise_all(funs(max)) %>%
+  select(matches("norm")) 
+
+minVal <- df2 %>% summarise_all(funs(min)) %>%
+  select(matches("norm"))
+
+
+maxmin <- (maxVal-minVal) / minVal
+maxmin
+```
+
+Then, we can turn this into a usable table
+
+```{r}
+df_maxmin <-  as.data.frame(t(maxmin))
+maxminTable <-melt(data.frame(companyNames ,df_maxmin))
+maxminTable$variable <- NULL
+maxminTable$companyNames <- paste(maxminTable$companyNames,"MaxminRange",sep= "&")
+maxminTable %>% arrange(desc(value))
+```
+
+Visualization of this
+
+```{r}
+maxminTable %>%
+  arrange(desc(value)) %>%
+  ggplot(data = ., aes(x = reorder(companyNames, value), y = value, 
+    fill = companyNames, color = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
+```
+
+
+
+## 3) Economic Volume of Companies
 
 The geometric average of volume and price can show us the economic value of companies. Thus, we can calculate this value and compare the companies by this.
 
@@ -627,7 +665,7 @@ economicValue %>%
     fill = companyNames, color = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
 ```
 
-## 3) Correlation of Economic Value and Momentums
+## 4) Correlation of Economic Value and Momentums
 
 ```{r eval=FALSE, include=FALSE}
 cor(economicValue$V1,momentumTable$value)
@@ -638,15 +676,15 @@ cor(economicValue$V1,momentumTable$value)
 Correlation: $-0.09753649$
 
 
-The information about companies and their stocks' purchase has a correlation nearly -0.1 which so too low to guess about it. That's why, economic values of companies are not good parameter for price predictions.
+The information about companies and their stocks' purchase has a correlation nearly -0.1 which is too low to guess about it. That's why, economic values of companies are not good parameter for price predictions.
 
 # 8) Conclusion
 
-  * Kmeans shows us which prices are have highly momentum and which prices have lower momentum. Aselsan is the outlier because of its highly increase in price to the normalized value. Then, group 2 have high momenum then 3 group. We can deduce that, group 1 and group 2 stocks would be the best options for inverstors to get high income return.
+  * Kmeans shows us which prices have highly momentum and which prices have lower momentum. Aselsan is the outlier because of its highly increase in price to the normalized value. Then, group 2 have high momenum then 3 group. We can deduce that, group 1 and group 2 stocks would be the best options for inverstors to get high income return.
   
   * ASELS and KRDMD have higher correlation with their volume which means they are related with their purchase willingleness of their stocks. We can assuma that, some inverstors predicted that their prices would get higher.
   
-  * The price correlation shows that some investors can find relation between stocks which have highly momentum and which don't require the highly but have correlation so that they predict others price changes.
+  * The price correlation shows that some investors can find relation between stocks which have highly momentum and which don't require the highly but have correlation so that they predict others' price changes.
   TUPRS & ASELS, ASELS & PETKM,EREGL & SISE,TOASO & KCHOL have higher momentum than average. EREGL has the a high momentum but SISE has not. However, some inverstor can predict SISE's prices by EREGL and collect this stock in their portfolio.
   
   * The product of volume-price which is similary their geometric average could shows us the economic value of companies. For example, GARANTI BANK reached the most valuable BANK in 3. quarter in this year. This information shows the market share of companies similarly regarless of their price momentum. That's why, investors use this information to predict price changes. However, If we look at
