@@ -381,12 +381,11 @@ ggplot(df, aes(df$HALKB_Price, df$HALKB_Volume)) +
 
 ## 2) Linear Regression Charts for These Highly Correlated Prices
 
-Let's plot them together with **grid** function
 
 **TOASO & KCHOL** is the first one
 
 ```{r}
-g1 <- ggplot(df, aes(df$TOASO_Price, df$KCHOL_Price)) + 
+ggplot(df, aes(df$TOASO_Price, df$KCHOL_Price)) + 
   geom_count(color="darkred") + 
   geom_smooth(method="lm", se=F,color="blue")
 ```
@@ -394,7 +393,7 @@ g1 <- ggplot(df, aes(df$TOASO_Price, df$KCHOL_Price)) +
 **TUPRS & ASELS** is the second one
 
 ```{r}
-g2 <- ggplot(df, aes(df$TUPRS_Price, df$ASELS_Price)) + 
+ggplot(df, aes(df$TUPRS_Price, df$ASELS_Price)) + 
   geom_count(color="darkred") + 
   geom_smooth(method="lm", se=F,color="blue")
 ```
@@ -402,7 +401,7 @@ g2 <- ggplot(df, aes(df$TUPRS_Price, df$ASELS_Price)) +
 **ASELS & PETKM** is the third one
 
 ```{r}
-g3 <- ggplot(df, aes(df$ASELS_Price, df$PETKM_Price)) + 
+ggplot(df, aes(df$ASELS_Price, df$PETKM_Price)) + 
   geom_count(color="darkred") + 
   geom_smooth(method="lm", se=F,color="blue")
 ```
@@ -410,7 +409,7 @@ g3 <- ggplot(df, aes(df$ASELS_Price, df$PETKM_Price)) +
 **EREGL & SISE** is the forth one
 
 ```{r}
-g4 <- ggplot(df, aes(df$EREGL_Price, df$SISE_Price)) + 
+ggplot(df, aes(df$EREGL_Price, df$SISE_Price)) + 
   geom_count(color="darkred") + 
   geom_smooth(method="lm", se=F,color="blue")
 ```
@@ -418,21 +417,11 @@ g4 <- ggplot(df, aes(df$EREGL_Price, df$SISE_Price)) +
 **GARAN & AKBNK** is the fifth one
 
 ```{r}
-g5 <- ggplot(df, aes(df$GARAN_Price, df$AKBNK_Price)) + 
+ggplot(df, aes(df$GARAN_Price, df$AKBNK_Price)) + 
   geom_count(color="darkred") + 
   geom_smooth(method="lm", se=F,color="blue")
 ```
 
-Together their table is like this
-
-```{r}
-grid.arrange(g1, 
-             g2,
-             g3,
-             g4,
-             g5,
-             nrow=5)
-```
 
 ## 3) Linear Regression Charts for These Highly Negative Correlated Prices
 
