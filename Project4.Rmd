@@ -608,10 +608,10 @@ We can find the max and min values of prices and calculate the measure of it. Th
 
 ```{r}
 
-maxVal <- df1 %>% summarise_all("max") %>%
+maxVal <- bist30 %>% summarise_all("max") %>%
   select(matches("norm")) 
 
-minVal <- df2 %>% summarise_all("min") %>%
+minVal <- bist30 %>% summarise_all("min") %>%
   select(matches("norm"))
 
 
@@ -747,6 +747,74 @@ ggplot(CompanyPrices, aes(x = Dates)) +
   geom_line(aes(y = OtherPrices, colour = "OtherPrices")) +
   geom_line(aes(y = TotalPrices, colour = "TotalPrices")) +
   xlab("Years") + ylab("Normalized Prices")
+```
+
+
+```{r}
+
+
+
+
+# Define UI for application that plots features of movies
+ui <- fluidPage(
+  
+  # Sidebar layout with a input and output definitions
+  sidebarLayout(
+    
+    # Inputs
+    sidebarPanel(
+      
+      # Select variable for y-axis
+      selectInput(inputId = "y", 
+                  label = "Y-axis:",
+                  choices = c("IMDB rating"          = "imdb_rating", 
+                              "IMDB number of votes" = "imdb_num_votes", 
+                              "Critics score"        = "critics_score", 
+                              "Audience score"       = "audience_score", 
+                              "Runtime"              = "runtime"), 
+                  selected = "audience_score"),
+      
+      # Select variable for x-axis
+      selectInput(inputId = "x", 
+                  label = "X-axis:",
+                  choices = c("IMDB rating"          = "imdb_rating", 
+                              "IMDB number of votes" = "imdb_num_votes", 
+                              "Critics score"        = "critics_score", 
+                              "Audience score"       = "audience_score", 
+                              "Runtime"              = "runtime"), 
+                  selected = "critics_score"),
+      
+      # Select variable for color
+      selectInput(inputId = "z", 
+                  label = "Color by:",
+                  choices = c("Title type" = "title_type", 
+                              "Genre" = "genre", 
+                              "MPAA rating" = "mpaa_rating", 
+                              "Critics rating" = "critics_rating", 
+                              "Audience rating" = "audience_rating"),
+                  selected = "mpaa_rating")
+    ),
+    
+    # Outputs
+    mainPanel(
+      plotOutput(outputId = "scatterplot")
+    )
+  )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  
+  # Create the scatterplot object the plotOutput function is expecting
+  output$scatterplot <- renderTable({
+    ggplot(data = CompanyPrices, aes_string(x = input$x, y = input$y,
+                                     color = input$z)) +
+      geom_point()
+  })
+}
+
+# Create a Shiny app object
+shinyApp(ui = ui, server = server)
 ```
 
 
