@@ -750,73 +750,6 @@ ggplot(CompanyPrices, aes(x = Dates)) +
 ```
 
 
-```{r}
-
-
-
-
-# Define UI for application that plots features of movies
-ui <- fluidPage(
-  
-  # Sidebar layout with a input and output definitions
-  sidebarLayout(
-    
-    # Inputs
-    sidebarPanel(
-      
-      # Select variable for y-axis
-      selectInput(inputId = "y", 
-                  label = "Y-axis:",
-                  choices = c("IMDB rating"          = "imdb_rating", 
-                              "IMDB number of votes" = "imdb_num_votes", 
-                              "Critics score"        = "critics_score", 
-                              "Audience score"       = "audience_score", 
-                              "Runtime"              = "runtime"), 
-                  selected = "audience_score"),
-      
-      # Select variable for x-axis
-      selectInput(inputId = "x", 
-                  label = "X-axis:",
-                  choices = c("IMDB rating"          = "imdb_rating", 
-                              "IMDB number of votes" = "imdb_num_votes", 
-                              "Critics score"        = "critics_score", 
-                              "Audience score"       = "audience_score", 
-                              "Runtime"              = "runtime"), 
-                  selected = "critics_score"),
-      
-      # Select variable for color
-      selectInput(inputId = "z", 
-                  label = "Color by:",
-                  choices = c("Title type" = "title_type", 
-                              "Genre" = "genre", 
-                              "MPAA rating" = "mpaa_rating", 
-                              "Critics rating" = "critics_rating", 
-                              "Audience rating" = "audience_rating"),
-                  selected = "mpaa_rating")
-    ),
-    
-    # Outputs
-    mainPanel(
-      plotOutput(outputId = "scatterplot")
-    )
-  )
-)
-
-# Define server function required to create the scatterplot
-server <- function(input, output) {
-  
-  # Create the scatterplot object the plotOutput function is expecting
-  output$scatterplot <- renderTable({
-    ggplot(data = CompanyPrices, aes_string(x = input$x, y = input$y,
-                                     color = input$z)) +
-      geom_point()
-  })
-}
-
-# Create a Shiny app object
-shinyApp(ui = ui, server = server)
-```
-
 
 After all, banking sector is below of the other sectors by means of price values.
 
@@ -838,7 +771,7 @@ After all, banking sector is below of the other sectors by means of price values
   
   * There are highly capable and successfull investors and other type investors. If higher investment capacity investors use their money in highly production companies, than TUPRAS result is not suprising. Another low capital investor just triggers the Volume and that's why information about Garanti and others could be manuplative If we focus the price changes.
   
-  * The banking sector is below the averages of other sectors such as heavy industry and similar company stocks. This is according to economic volume of companies and generally this banks belongs main companies which focuses on other sectors as KOC,SABANCI etc. This companies creates banks in order to supply their main job area. That's why we cannot expect that the stocks of their banks could be higher than their heavy industry companies logically.
+  * The banking sector is below the averages of other sectors such as heavy industry and similar company stocks. This is according to economic volume of companies and generally these banks belongs main companies which focuses on other sectors as KOC,SABANCI etc. These companies creates banks in order to supply their main job area. That's why we cannot expect that the stocks of their banks could be higher than their heavy industry companies logically.
    
 # 10) References
 
