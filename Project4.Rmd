@@ -22,7 +22,7 @@ geometry: margin=0in
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T,
                       results = "hide")
-library(shiny)
+library(ggthemes)
 library(Hmisc)
 library(gridExtra)
 library(GGally)
@@ -41,7 +41,7 @@ library(knitr)
 
 
 ```{r analysis, results="markup"}
-library(shiny)
+library(ggthemes)
 library(Hmisc)
 library(gridExtra)
 library(GGally)
@@ -56,6 +56,12 @@ library(corrplot)
 library(date)
 library(readxl)
 library(knitr)
+```
+
+Setting theme
+
+```{r}
+theme_set(theme_economist())
 ```
 
 # 2) Data Preparations
@@ -209,7 +215,6 @@ corrTable
 **CorVec** variable keeps the correlation values between prices and volumes . There are negative and positive values. The absolute value of correlation means the relationship of these two variables are more predictable and more meaningfull for future actions. Thus, investigating these correlation values could help for regression values to seek which stocks are the best for prediction.
 
 ```{r}
-theme_set(theme_bw())
 
 corrTable %>% arrange(desc(value)) %>%
 ggplot( aes(x=companyNames, y=value)) + 
@@ -269,7 +274,6 @@ Comparison of the results between each column correlation values to related pric
 
 
 ```{r}
-theme_set(theme_bw())
 
 generalCorData %>% arrange(desc(abs(cor))) %>%
   filter(cor > 0.95) %>%
@@ -286,11 +290,39 @@ generalCorData %>% arrange(desc(abs(cor))) %>%
   filter(cor > 0.95) 
 ```
 
+Also correlation with negative high values are preferable to include in portfolio
+
+```{r}
+
+
+generalCorData %>% arrange(desc(cor)) %>%
+  filter(cor < -0.72) %>%
+ggplot( aes(x=Names, y=cor)) + 
+  geom_bar(stat="identity", width=.5, fill="tomato3") + 
+  labs(title="Ordered Bar Chart", 
+       subtitle="Correlation Values", 
+       caption="Correlation graph") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6))
+```
+
+
+
+
 Let's draw these relations with **ggplot** library
 
 
 
 Result: So there is a highly correlation between some prices. Therefore, if there is relation, we can examine the predictions on these values.
+
+```{r}
+ggpairs(df, 
+        columns = c("ASYAB_Price","KCHOL_Price","BIMAS_Price","TTRAK_Price","TOASO_Price","IHLAS_Price"), 
+        upper = list(continuous = wrap("cor", 
+                                       size = 10)), 
+        lower = list(continuous = "smooth"))
+```
+
+And the graph of negative correlation values.
 
 ```{r}
 ggpairs(df, 
@@ -402,7 +434,53 @@ grid.arrange(g1,
              nrow=5)
 ```
 
-## 3) Linear Models for These Highly Correlated Prices
+## 3) Linear Regression Charts for These Highly Negative Correlated Prices
+
+
+**ASYAB & KCHOL** is the first one
+
+```{r}
+ggplot(df, aes(df$ASYAB_Price, df$KCHOL_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**ASYAB & BIMAS** is the second one
+
+```{r}
+ggplot(df, aes(df$ASYAB_Price, df$BIMAS_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**ASYAB & TTRAK** is the third one
+
+```{r}
+ggplot(df, aes(df$ASYAB_Price, df$TTRAK_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**ASYAB & TOASO** is the forth one
+
+```{r}
+ggplot(df, aes(df$ASYAB_Price, df$TOASO_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**TTRAK & IHLAS** is the fifth one
+
+```{r}
+ggplot(df, aes(df$TTRAK_Price, df$IHLAS_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+
+```
+
+
+
+## 4) Linear Models for These Highly Correlated Prices
 
 
 With **lm** function we can see the relation between data as linear model
@@ -448,7 +526,7 @@ Adjusted R-squared:  $0.9101$
 The Adjusted R-squared values are really high. That's why, we can say that, the prediction made between prices are highly elective and measurable.
 
 
-## 4) Linear Models for These Specific Stocks
+## 5) Linear Models for These Specific Stocks
 
 
 And **linear models** for these stocks are
@@ -527,7 +605,7 @@ kmeans(annual_average, 3)
 
 
 
-## 1) Cluster Table
+## 6.1) Cluster Table
 
 Structuring the table for **kmeans**.
 
@@ -553,7 +631,7 @@ ggplot(clusterFrame, aes(x =Groups , y = seq(1,30,1), colour = Groups,fill = Gro
 ```
           
 
-## 2) Sum of Squares
+## 6.2) Sum of Squares
 
 $$\frac{betweenSS}{totalSS} = 87.5 $$
 
@@ -564,7 +642,7 @@ Consequently, we can assume **Aselsan** as an outlier, so the result of k-means 
 
 # 7) Comperasion of Company Stocks
 
-## 1) Price Momentums 
+## 7.1) Price Momentums 
 
 We can measure the change in momentums by looking last and first 3 months average differences. The differences between last and first can show us what the price momentum would be beneficial if we purchase these stocks at 2011.
 
@@ -602,7 +680,7 @@ momentumTable %>%
     fill = companyNames, color = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
 ```
 
-## 2) Possible Highest Income Measure
+## 7.2) Possible Highest Income Measure
 
 We can find the max and min values of prices and calculate the measure of it. This will show us the a possible income for investor how to reach a maxiumum profit.
 
@@ -640,7 +718,7 @@ maxminTable %>%
 
 
 
-## 3) Economic Volume of Companies
+## 7.3) Economic Volume of Companies
 
 The geometric average of volume and price can show us the economic value of companies. Thus, we can calculate this value and compare the companies by this.
 
@@ -665,7 +743,7 @@ economicValue %>%
     fill = companyNames, color = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
 ```
 
-## 4) Correlation of Economic Value and Momentums
+## 7.4) Correlation of Economic Value and Momentums
 
 ```{r eval=FALSE, include=FALSE}
 cor(economicValue$V1,momentumTable$value)
@@ -680,6 +758,8 @@ The information about companies and their stocks' purchase has a correlation nea
 
 # 8) General Comperasion of Two Sector Banks and Others
 
+## 8.1) Basic Average
+
 First of all, we select the 6 banks from banking sector
 
 ```{r}
@@ -692,7 +772,7 @@ bankStocks <- c("GARAN_Price_norm","VAKBN_Price_norm","AKBNK_Price_norm","YKBNK 
 Selecting from bist30 data table as made below
 
 ```{r}
-newbist30 = bist30[,62:91]
+newbist30 <- bist30[,62:91]
 selectedComp1 <- newbist30[,bankStocks]
 selectedComp2 <- newbist30[ , !(names(newbist30) %in% bankStocks)]
 totalComp <- newbist30 %>% select(matches("norm"))
@@ -749,9 +829,72 @@ ggplot(CompanyPrices, aes(x = Dates)) +
   xlab("Years") + ylab("Normalized Prices")
 ```
 
-
-
 After all, banking sector is below of the other sectors by means of price values.
+
+## 8.2) Weighted Average
+
+```{r}
+prices <- bist30[0:61] %>%
+  select(matches("price")) 
+volumes <- bist30[0:61] %>%
+  select(matches("Volume"))
+
+priceVolumeProduct <- prices * volumes
+
+```
+
+Volume Sums
+```{r}
+volumeSums <- volumes %>% summarise_at(names(volumes), mean, na.rm = TRUE) 
+TotalVolume <- rowSums(volumeSums)
+
+```
+
+Weigthed Average
+
+```{r}
+weigthedAverage <- priceVolumeProduct / TotalVolume
+weigthedAverage
+```
+
+Changing the names of columns
+
+```{r}
+colnames(weigthedAverage) <- paste(companyNames,"wAvg",sep = "_")
+
+weigthedAverage
+```
+
+Grouping according to sectors.
+
+```{r}
+bankStocksAvg <- c(24,14,25,26,30,1,6)
+```
+
+
+In the below,we selected banking sectors and found the sums of groups. After that, collected them into a WavgTable data frame.
+
+```{r}
+mainGroup <- weigthedAverage[,bankStocksAvg]
+otherGroup <- weigthedAverage[ , c(-24,-14,-25,-26,-30,-1,-6)]
+totalGroup <- weigthedAverage %>% select(matches("wAvg"))
+
+mainGroup$Avg <- rowSums(mainGroup)
+otherGroup$Avg <- rowSums(otherGroup)
+totalGroup$Avg <- rowSums(totalGroup)
+WAvgTable <- data.frame(bist30$Dates,mainGroup$Avg,otherGroup$Avg,totalGroup$Avg )
+```
+
+We can visualize table as before
+
+```{r}
+ggplot(WAvgTable, aes(x = bist30.Dates)) + 
+  geom_line(aes(y = mainGroup.Avg, colour = "mainGroup.Avg")) +
+  geom_line(aes(y = otherGroup.Avg, colour = "otherGroup.Avg")) +
+  geom_line(aes(y = totalGroup.Avg, colour = "totalGroup.Avg")) +
+  xlab("Years") + ylab("Weighted Prices")
+```
+
 
 
 # 9) Conclusion
@@ -795,3 +938,6 @@ After all, banking sector is below of the other sectors by means of price values
 
 [8] - Summarising the total columns
 [link](https://dplyr.tidyverse.org/reference/summarise_all.html)
+
+[9] - Row Summation
+[link](https://www.rdocumentation.org/packages/raster/versions/2.8-4/topics/rowSums)
