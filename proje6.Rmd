@@ -1,0 +1,843 @@
+---
+title: "Analysis of Equities in BIST30 Index (XU030 Index)"
+author: "Data Jugglers"
+date: "November 21, 2018"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: sandstone
+    highlight: kate
+    df_print: paged
+    fig_width: 11
+    fig_height: 7
+    fig_crop: false
+classoption: landscape
+geometry: margin=0in
+---
+
+# 1) Needed Libraries
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T,
+                      results = "hide")
+library(factoextra)
+library(fpc)
+library(cluster)
+library(HSAUR)
+library(ggthemes)
+library(Hmisc)
+library(gridExtra)
+library(GGally)
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(reshape2)
+library(tidyverse)
+library(ggplot2)
+library(corrgram)
+library(corrplot)
+library(date)
+library(readxl)
+library(knitr)
+```
+
+
+```{r analysis, results="markup"}
+library(ggthemes)
+library(Hmisc)
+library(gridExtra)
+library(GGally)
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(reshape2)
+library(tidyverse)
+library(ggplot2)
+library(corrgram)
+library(corrplot)
+library(date)
+library(readxl)
+library(knitr)
+```
+
+Setting theme
+
+```{r}
+theme_set(theme_economist())
+```
+
+# 2) Data Preparations
+
+
+
+In this project, we are analyzing the BIST30 members as of November 2018. The data set consist of last price ad volume data of equities listed in BIST30 Index from January 2011 to November 2018.
+Firstly, 
+*we have examined the data structure and, 
+*made some little transformation in the columns of data frame.
+
+
+```{r}
+tmp<-tempfile(fileext=".xlsx")
+download.file("https://github.com/MEF-BDA503/gpj18-data-jugglers/blob/master/XU030_v2.xlsx?raw=true",destfile=tmp,mode='wb')
+
+bist30=read_xlsx(tmp)
+
+```
+
+```{r include=FALSE}
+as.Date(bist30$Dates,format="%y-%m-%d")
+```
+
+```{r echo=TRUE}
+str(bist30$Dates)
+range(bist30$Dates)
+head(bist30)
+tail(bist30)
+```
+
+# 3) Beta Analysis
+
+**Normalization**:
+Before starting beta analysis, we should normalize the data as we take date 01.01.2011 equals to 100 for all stocks' price.
+
+```{r echo=TRUE}
+tmp<-tempfile(fileext=".xlsx")
+download.file("https://github.com/MEF-BDA503/gpj18-data-jugglers/blob/master/XU030_v2.xlsx?raw=true",destfile=tmp,mode='wb')
+bist30=read_xlsx(tmp)
+
+bist30 <- cbind(bist30, apply(bist30[seq(2,60,2)], 2, function (a) a / a[[1]] * 100))
+
+colnames(bist30)[62:91] <- paste(colnames(bist30[seq(2,60,2)]), "norm", sep = "_")
+
+head(bist30[62:90],3)
+norms <- bist30[,62:91]
+
+```
+
+
+We will divide the data into two groups, financial sector companies, reel sector companies. Then we will compare two groups according to the annual yields, and illustrate them by graphics for each year. 
+
+# 4) Correlation and Regression Analysis of Volume and Price {.tabset .tabset-fade .tabset-pills}
+
+## 1) Correlation Tables for Normalized and Raw Data
+
+
+**Corrplot** is a good source for correlation table, we can see the desired relations between two values in table by looking the correlation table. In this graph we use normalized data set.
+
+"**TASK1**: Buraya korelasyon matrisi eklenecek""
+```{r}
+norms <- bist30[62:90]
+corrValuesPrices <- cor(norms,norms)
+
+```
+
+We need company names after
+
+```{r}
+companyNames <- c('GARAN','SAHOL','BIMAS','ARCLK','EREGL','YKBNK','TOASO','TUPRS','KRDMD','TTRAK','ASELS','IPEKE','KOZAA','ASYAB','ENKAI','KOZAL','DOHOL','IHLAS','KCHOL','EKGYO','TCELL','MGROS','SISE','ISCTR','VAKBN','AKBNK','PETKM','THYAO','TTKOM','HALKB')
+```
+
+
+
+```{r fig.height = 15, fig.width = 15}
+corrplot(corrValuesPrices, method = "number")
+```
+
+
+```{r fig.height = 12 , fig.width = 12}
+
+corrplot(corrValuesPrices, type = "upper", tl.pos = "td",
+         method = "circle", tl.cex = 0.5, tl.col = 'black',
+         order = "hclust", diag = FALSE)
+```
+
+## 2) The Correlation Values between Volume and Price Differences
+
+"**TASK2**: Hacim ve fiyat farklarý alýnarak grafikler güncellenecek.
+
+```{r}
+# First I take the first 2055 row of prices then last 2055
+prices1 <- head(bist30,n = 2055) %>% select(matches("price"))
+prices2 <- tail(bist30,n = -1) %>% select(matches("price"))
+
+# After, I divide the last 2055 to first 2055 which are the one before values.
+pricesRat <- prices2 / prices1
+pricesRat <- rowSums(pricesRat) / 30
+# With rowsums / 30 I take the average of total values.
+
+volume1 <- head(bist30,n = 2055) %>% select(matches("volume"))
+volume2 <- tail(bist30,n = -1) %>% select(matches("volume"))
+
+volumeRat <- volume2 / volume1
+volumeRat <- rowSums(volumeRat) / 30
+dates <- bist30$Dates[2:2056]
+ratTable <- data.frame(dates,pricesRat,volumeRat)
+head(ratTable)
+```
+
+```{r}
+ggplot(ratTable,aes(x = dates,y = 0))+
+       geom_line(aes(y = pricesRat, colour = "pricesRat")) +
+  geom_line(aes(y = volumeRat, colour = "volumeRat")) +
+  xlab("Years") + ylab("Ratio Values of Volume and Price")
+```
+
+```{r}
+print(cor(ratTable$pricesRat,ratTable$volumeRat))
+```
+
+
+## 3) Highly Correlated Price Values
+
+
+First, we need to see the relation of the price and volumes for each column.
+
+```{r}
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+    )
+}
+```
+
+
+
+```{r}
+mydata <- bist30[,2:60]
+corrData<-rcorr(as.matrix(mydata))
+generalCorData <- flattenCorrMatrix(corrData$r, corrData$P)
+generalCorData
+
+generalCorData$Names <- paste(generalCorData$row,generalCorData$column,sep= "&")
+
+```
+
+Comparison of the results between each column correlation values to related price-volume correlation values
+
+
+```{r}
+
+generalCorData %>% arrange(desc(abs(cor))) %>%
+  filter(cor > 0.95) %>%
+ggplot( aes(x=Names, y=cor)) + 
+  geom_bar(stat="identity", width=.5, fill="tomato3") + 
+  labs(title="Ordered Bar Chart", 
+       subtitle="Correlation Values", 
+       caption="Correlation graph") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6))
+```
+
+```{r}
+generalCorData %>% arrange(desc(abs(cor))) %>%
+  filter(cor > 0.95) 
+```
+
+Also correlation with negative high values are preferable to include in portfolio
+
+```{r}
+
+
+generalCorData %>% arrange(desc(cor)) %>%
+  filter(cor < -0.72) %>%
+ggplot( aes(x=Names, y=cor)) + 
+  geom_bar(stat="identity", width=.5, fill="tomato3") + 
+  labs(title="Ordered Bar Chart", 
+       subtitle="Correlation Values", 
+       caption="Correlation graph") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6))
+```
+
+
+
+
+Let's draw these relations with **ggplot** library
+
+
+
+Result: So there is a highly correlation between some prices. Therefore, if there is relation, we can examine the predictions on these values.
+
+```{r}
+ggpairs(bist30, 
+        columns = c("ASYAB_Price","KCHOL_Price","BIMAS_Price","TTRAK_Price","TOASO_Price","IHLAS_Price"), 
+        upper = list(continuous = wrap("cor", 
+                                       size = 10)), 
+        lower = list(continuous = "smooth"))
+```
+
+And the graph of negative correlation values.
+
+```{r}
+ggpairs(bist30, 
+        columns = c("ASELS_Price","PETKM_Price","EREGL_Price","SISE_Price","GARAN_Price","AKBNK_Price","TOASO_Price","KCHOL_Price","TUPRS_Price"), 
+        upper = list(continuous = wrap("cor", 
+                                       size = 10)), 
+        lower = list(continuous = "smooth"))
+```
+
+# 4) Linear Models {.tabset .tabset-fade .tabset-pills}
+
+
+## 1) Linear Regression Charts for These Highly Correlated Prices
+
+
+**TOASO & KCHOL** is the first one
+
+```{r}
+ggplot(bist30, aes(bist30$TOASO_Price, bist30$KCHOL_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**TUPRS & ASELS** is the second one
+
+```{r}
+ggplot(bist30, aes(bist30$TUPRS_Price, bist30$ASELS_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**ASELS & PETKM** is the third one
+
+```{r}
+ggplot(bist30, aes(bist30$ASELS_Price, bist30$PETKM_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**EREGL & SISE** is the forth one
+
+```{r}
+ggplot(bist30, aes(bist30$EREGL_Price, bist30$SISE_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**GARAN & AKBNK** is the fifth one
+
+```{r}
+ggplot(bist30, aes(bist30$GARAN_Price, bist30$AKBNK_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+
+## 2) Linear Regression Charts for These Highly Negative Correlated Prices
+
+
+**ASYAB & KCHOL** is the first one
+
+```{r}
+ggplot(bist30, aes(bist30$ASYAB_Price, bist30$KCHOL_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**ASYAB & BIMAS** is the second one
+
+```{r}
+ggplot(bist30, aes(bist30$ASYAB_Price, bist30$BIMAS_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**ASYAB & TTRAK** is the third one
+
+```{r}
+ggplot(bist30, aes(bist30$ASYAB_Price, bist30$TTRAK_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**ASYAB & TOASO** is the forth one
+
+```{r}
+ggplot(bist30, aes(bist30$ASYAB_Price, bist30$TOASO_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+```
+
+**TTRAK & IHLAS** is the fifth one
+
+```{r}
+ggplot(bist30, aes(bist30$TTRAK_Price, bist30$IHLAS_Price)) + 
+  geom_count(color="darkred") + 
+  geom_smooth(method="lm", se=F,color="blue")
+
+```
+
+
+
+## 3) Linear Models for These Highly Correlated Prices
+
+
+With **lm** function we can see the relation between data as linear model
+
+```{r}
+linearMod1_1 <- lm(bist30$TOASO_Price ~ bist30$KCHOL_Price, data=bist30)
+linearMod1_2 <- lm(bist30$TUPRS_Price ~ bist30$ASELS_Price, data=bist30)
+linearMod1_3 <- lm(bist30$ASELS_Price ~ bist30$PETKM_Price, data=bist30)
+linearMod1_4 <- lm(bist30$EREGL_Price ~ bist30$SISE_Price, data=bist30)
+linearMod1_5 <- lm(bist30$GARAN_Price ~ bist30$AKBNK_Price, data=bist30)
+summary(linearMod1_1)
+summary(linearMod1_2)
+summary(linearMod1_3)
+summary(linearMod1_4)
+summary(linearMod1_5)
+```
+
+Formula Model 1: $-7.17270  + 2.13500 * X$
+
+Adjusted R-squared:  $0.9331$
+
+
+Formula Model 2: $36.75406  + 2.90503 * X$
+
+Adjusted R-squared:  $0.9238$
+
+
+Formula Model 3: $-5.34984  + 5.29687 * X$
+
+Adjusted R-squared:  $0.9141$
+
+
+Formula Model 4: $-2.34248  + 2.44400 * X$
+
+Adjusted R-squared:  $0.9108$
+
+
+Formula Model 5: $-0.41338  + 1.08461 * X$
+
+Adjusted R-squared:  $0.9101$
+
+
+The Adjusted R-squared values are really high. That's why, we can say that, the prediction made between prices are highly elective and measurable.
+
+# 6) K-Means Analysis
+
+We have divided the dataset into two groups as financial sector companies and real sector companies. Now we will check whether this classification is true or not by using k-means.
+
+```{r echo=TRUE}
+#we calculate the annual average of stocks.
+annual_average<- aggregate(norms, list(format(bist30$Dates, "%Y")), mean)
+View(annual_average)
+
+#get transpose of annual_average dataset. 
+transpose <- as.matrix(annual_average[,-1])
+rownames(transpose) <- annual_average[,1]
+annual_average <- t(transpose)
+View(annual_average)
+
+#lets define wcss(Within cluster sum of squares) vector. 
+wcss <- vector()
+
+#lets find the distance to the center for each predefined center numbers.
+for (i in 1:7) wcss[i] <- sum(kmeans(annual_average, i)$withinss)
+View(wcss)
+
+#lets determine the breakdown point of the wcss graph. 
+plot(1:7, wcss, type="l")
+
+#3 centers are the optimum number for centers.
+kmeans(annual_average, 3)
+
+
+```
+
+
+
+## 6.1) Cluster Table
+
+Structuring the table for **kmeans**.
+
+**TASK3:** Aþaðýdaki kod çalýþtýrýlacak, çalýþýrsa bir sonrakichunk kaldýrýlacak.
+
+```{r}
+bist30_cluster <- kmeans(annual_average,centers=3)
+rownames(annual_average)
+bist30_cluster$cluster
+##Get the clusters
+results=data.frame(stocks=names(bist30_cluster$cluster), cluster_stocks=bist30_cluster$cluster) %>% arrange(cluster_stocks,stocks)
+results[,1]
+```
+
+
+```{r}
+c1 <- companyNames
+c2 <- c(3,3,2,2,2,3,2,2,2,2,1,3,3,3,3,3,3,3,2,3,3,3,2,3,3,3,2,2,3,3)
+clusterFrame <- melt(data.frame(c1,c2))
+clusterFrame$variable <- NULL
+names(clusterFrame) <- c("Companies","Groups")
+
+```
+
+```{r echo = FALSE, results = 'asis'}
+kable(clusterFrame,caption = "Kmeans Cluster Table")
+
+```
+
+```{r}
+annual_average <- as.data.frame(annual_average)
+annual_average
+
+```
+
+
+
+```{r}
+plot(annual_average, col = bist30_cluster$cluster)
+points(bist30_cluster$centers, col = 1:2, pch = 8, cex = 2)
+```
+
+```{r}
+plot(bist30_cluster, data=annual_average)
+```
+```{r fig.width= 12, fig.height= 12}
+data(annual_average)
+dissE <- daisy(annual_average) 
+dE2   <- dissE^2
+sk2   <- silhouette(bist30_cluster$cl, dE2)
+plot(sk2)
+```
+
+```{r}
+fviz_cluster(bist30_cluster, data = annual_average[1:8])
+```
+
+
+
+**TASK4** Önce distance lara göre dersteki grafik denenecek, olmadý sort edilip grafik güncellenecek.
+
+```{r}
+ggplot(clusterFrame, aes(x =Groups , y = seq(1,30,1), colour = Groups,fill = Groups)) + geom_text(label = clusterFrame$Companies) + 
+  xlab(label = "Numbers of Groups") +
+  ylab(label = "Seperation according to Sequence") 
+```
+          
+
+## 6.2) Sum of Squares
+
+$$\frac{betweenSS}{totalSS} = 87.5 $$
+
+
+
+Consequently, we can assume **Aselsan** as an outlier, so the result of k-means match up with our first assumption (there are two groups in bist30 stock such as real sector and financial sector) with regards to group classification.
+
+
+# 7) Comparison of Company Stocks
+
+## 7.1) Equity Yields Comparison for the Selected Period
+
+We can measure the change in prices by looking last and first 3 months average differences. The differences between last and first can show us what the yileds would be beneficial if we purchase these stocks at 2011.
+
+**TASK5** momentum geçen yerler yield olarak güncellenecek, grafik altýndaki rakamlar yüzdeye çevrilecek.
+
+```{r}
+df1 <- head(bist30,n= 90)
+df2 <- tail(bist30,n= 90)
+
+averageFirst <- df1[0:61] %>% summarise_at(names(df1[0:61]), mean, na.rm = TRUE) %>%
+  select(matches("price")) 
+averageLast <- df2[0:61] %>% summarise_at(names(df2[0:61]), mean, na.rm = TRUE) %>%
+  select(matches("price"))
+
+momentums <- (averageLast - averageFirst) / averageFirst
+momentums
+```
+
+First, we should combine the company names and momentums
+
+```{r}
+df_momentums <-  as.data.frame(t(momentums))
+momentumTable <-melt(data.frame(companyNames ,df_momentums))
+momentumTable$variable <- NULL
+momentumTable$companyNames <- paste(momentumTable$companyNames,"Momentum",sep= "&")
+momentumTable %>% arrange(desc(value))
+
+```
+
+Lets visualize this
+
+```{r}
+
+momentumTable %>%
+  arrange(desc(value)) %>%
+  ggplot(data = ., aes(x = reorder(companyNames, value), y = value, 
+    fill = companyNames, color = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
+```
+
+## 7.2) Possible Highest Income Measure
+
+We can find the max and min values of prices and calculate the measure of it. This will show us the a possible income for investor how to reach a maxiumum profit.
+
+**TASK 6** her bir hissenin max ve min tarihleri tablo olarak verilecek, min tarihi max tan büyük olanlar varsa hem tabloda hem de grafikten bu hisseleri çýkar.
+
+```{r}
+
+maxVal <- bist30 %>% summarise_all("max") %>%
+  select(matches("norm")) 
+
+minVal <- bist30 %>% summarise_all("min") %>%
+  select(matches("norm"))
+
+
+maxmin <- (maxVal-minVal) / minVal
+maxmin
+```
+
+Then, we can turn this into a usable table
+
+```{r}
+df_maxmin <-  as.data.frame(t(maxmin))
+maxminTable <-melt(data.frame(companyNames ,df_maxmin))
+maxminTable$variable <- NULL
+maxminTable$companyNames <- paste(maxminTable$companyNames,"MaxminRange",sep= "&")
+maxminTable %>% arrange(desc(value))
+```
+
+Visualization of this
+
+```{r}
+maxminTable %>%
+  arrange(desc(value)) %>%
+  ggplot(data = ., aes(x = reorder(companyNames, value), y = value, 
+    fill = companyNames, color = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
+```
+
+
+
+## 7.3) Traded Value of Equities
+
+**TAKS7**: Economic Volume ifadeleri yerine Traded Value yazýlacak
+
+The geometric average of volume and price can show us the traded value of companies. Thus, we can calculate this value and compare the companies by this.
+
+```{r}
+df_volume <- bist30[0:61] %>% summarise_at(names(bist30[0:61]), mean, na.rm = TRUE) %>%
+  select(matches("Volume")) 
+
+df_prices <- bist30[0:61]%>% summarise_at(names(bist30[0:61]), mean, na.rm = TRUE) %>%
+  select(matches("Price")) 
+
+volumes <- as.data.frame(t(df_volume))
+prices <- as.data.frame(t(df_prices))
+tradedValue <- data.frame(companyNames,sqrt(volumes*prices))
+```
+
+Visualization of this data frame
+
+```{r}
+tradedValue %>%
+  arrange(desc(V1)) %>%
+  ggplot(data = ., aes(x = reorder(companyNames, V1), y = V1, 
+    fill = companyNames, color = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
+```
+
+## 7.4) Correlation of Economic Value and Momentums
+**TAKS9**: Deðerlendir, çýkarabilirsin
+
+```{r eval=FALSE, include=FALSE}
+cor(tradedValue$V1,momentumTable$value)
+```
+
+**cor(economicValue,momentumTable)**
+
+Correlation: $-0.03551822$
+
+
+The information about companies and their stocks' purchase has a correlation nearly -0.1 which is too low to guess about it. That's why, economic values of companies are not good parameter for price predictions.
+
+# 8) General Comperasion of Two Sector Banks and Others
+
+## 8.1) Basic Average
+
+First of all, we select the 6 banks from banking sector
+
+```{r}
+names(bist30)
+bankStocks <- c("GARAN_Price_norm","VAKBN_Price_norm","AKBNK_Price_norm","YKBNK _Price_norm","ASYAB_Price_norm","HALKB_Price_norm","ISCTR_Price_norm")
+
+```
+
+
+Selecting from bist30 data table as made below
+
+```{r}
+newbist30 <- bist30[,62:91]
+selectedComp1 <- newbist30[,bankStocks]
+selectedComp2 <- newbist30[ , !(names(newbist30) %in% bankStocks)]
+totalComp <- newbist30 %>% select(matches("norm"))
+selectedComp2
+```
+
+Afer that, transpozing the vales help to summarise the values.
+
+```{r}
+selectedComp2 <-  as.data.frame(t(selectedComp2))
+selectedComp1 <-  as.data.frame(t(selectedComp1))
+totalComp <- as.data.frame(t(totalComp))
+names(selectedComp2) <- bist30$Dates
+names(selectedComp1) <- bist30$Dates
+names(totalComp) <- bist30$Dates
+selectedComp1
+```
+
+As you can see we summarise the values of normalized prices
+
+```{r}
+meanVal1 <- selectedComp1 %>% summarise_all(mean) 
+meanVal2 <- selectedComp2 %>% summarise_all(mean)
+Totalmean <- totalComp %>% summarise_all(mean)
+```
+
+Then,naming and again transposing data to visualize in normal form
+
+```{r}
+newValue1<- as.data.frame(t(meanVal1))
+newValue2 <- as.data.frame(t(meanVal2))
+totalValue <-  as.data.frame(t(Totalmean))
+names(newValue1) <- "Prices1"
+names(newValue2) <- "Prices2"
+names(totalValue) <- "TotalPrices"
+```
+
+Merging this data tables helps us to generate a mean table for sector and general companies.
+
+```{r}
+CompanyPrices <-data.frame(bist30$Dates,newValue1$Prices1,newValue2$Prices2,totalValue$TotalPrices)
+names(CompanyPrices) <- c("Dates","bankSectorPrices","OtherPrices","TotalPrices")
+CompanyPrices
+```
+
+The normalized prices of groups to the years
+
+
+```{r}
+ggplot(CompanyPrices, aes(x = Dates)) + 
+  geom_line(aes(y = bankSectorPrices, colour = "bankSectorPrices")) +
+  geom_line(aes(y = OtherPrices, colour = "OtherPrices")) +
+  geom_line(aes(y = TotalPrices, colour = "TotalPrices")) +
+  xlab("Years") + ylab("Normalized Prices")
+```
+
+After all, banking sector is below of the other sectors by means of price values.
+
+## 8.2) Weighted Average
+
+**TASK 10:** Aðýrlýklandýrmaa bankacýlýk ve reel sektör için bakýlacak
+
+```{r}
+prices <- bist30[62:91] %>%
+  select(matches("norm")) 
+volumes <- bist30[0:61] %>%
+  select(matches("Volume"))
+
+priceVolumeProduct <- prices * volumes
+
+```
+
+Volume Sums
+```{r}
+TotalVolume <- rowSums(volumes)
+
+```
+
+Weigthed Average
+
+```{r}
+weigthedAverage <- priceVolumeProduct / TotalVolume
+weigthedAverage
+```
+
+Changing the names of columns
+
+```{r}
+colnames(weigthedAverage) <- paste(companyNames,"wAvg",sep = "_")
+
+weigthedAverage
+```
+
+Grouping according to sectors.
+
+```{r}
+bankStocksAvg <- c(24,14,25,26,30,1,6)
+```
+
+
+In the below,we selected banking sectors and found the sums of groups. After that, collected them into a WavgTable data frame.
+
+```{r}
+mainGroup <- weigthedAverage[,bankStocksAvg]
+otherGroup <- weigthedAverage[ , c(-24,-14,-25,-26,-30,-1,-6)]
+totalGroup <- weigthedAverage %>% select(matches("wAvg"))
+
+mainGroup$Avg <- rowSums(mainGroup)
+otherGroup$Avg <- rowSums(otherGroup)
+totalGroup$Avg <- rowSums(totalGroup)
+WAvgTable <- data.frame(bist30$Dates,mainGroup$Avg,otherGroup$Avg,totalGroup$Avg )
+```
+
+We can visualize table as before
+
+```{r}
+ggplot(WAvgTable, aes(x = bist30.Dates)) + 
+  geom_line(aes(y = mainGroup.Avg, colour = "mainGroup.Avg")) +
+  geom_line(aes(y = otherGroup.Avg, colour = "otherGroup.Avg")) +
+  geom_line(aes(y = totalGroup.Avg, colour = "totalGroup.Avg")) +
+  xlab("Years") + ylab("Weighted Prices")
+```
+
+
+
+# 9) Conclusion
+
+  * Kmeans shows us which prices have highly momentum and which prices have lower momentum. Aselsan is the outlier because of its highly increase in price to the normalized value. Then, group 2 have high momenum then 3 group. We can deduce that, group 1 and group 2 stocks would be the best options for inverstors to get high income return.
+  
+  * ASELS and KRDMD have higher correlation with their volume which means they are related with their purchase willingleness of their stocks. We can assuma that, some inverstors predicted that their prices would get higher.
+  
+  * The price correlation shows that some investors can find relation between stocks which have highly momentum and which don't require the highly but have correlation so that they predict others' price changes.
+  TUPRS & ASELS, ASELS & PETKM,EREGL & SISE,TOASO & KCHOL have higher momentum than average. EREGL has the a high momentum but SISE has not. However, some inverstor can predict SISE's prices by EREGL and collect this stock in their portfolio.
+  
+  * The product of volume-price which is similary their geometric average could shows us the economic value of companies. For example, GARANTI BANK reached the most valuable BANK in 3. quarter in this year. This information shows the market share of companies similarly regarless of their price momentum. That's why, investors use this information to predict price changes. However, If we look at
+  
+  * As it is mentioned, economic value of a company and the price changes are not correlated. That's why, the information about these area not properly truthful for investment.
+  
+  * Another information is, TUPRAS A.S and other heavy industry companies have high economic value but stock market cannot show this value when we look at the geometric average, because there is a posibility that the rising companies market their values higher than normally high companies. 
+  
+  * There are highly capable and successfull investors and other type investors. If higher investment capacity investors use their money in highly production companies, than TUPRAS result is not suprising. Another low capital investor just triggers the Volume and that's why information about Garanti and others could be manuplative If we focus the price changes.
+  
+  * The banking sector is below the averages of other sectors such as heavy industry and similar company stocks. This is according to economic volume of companies and generally these banks belongs main companies which focuses on other sectors as KOC,SABANCI etc. These companies creates banks in order to supply their main job area. That's why we cannot expect that the stocks of their banks could be higher than their heavy industry companies logically.
+   
+# 10) References
+
+[1] - Correlation Graphs [link](https://www.datacamp.com/community/blog/r-correlation-tutorial)
+
+[2] - Correlation Graphs 
+[link](https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html)
+
+[3] - General Graphs [link](http://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html)
+
+[4] - Math formulas for R Markdown [link](https://www.calvin.edu/~rpruim/courses/s341/S17/from-class/MathinRmd.html)
+
+[5] - R Markdown Style 
+[link](https://bookdown.org/yihui/rmarkdown/html-document.html)
+
+[6] - Merging line plots 
+[link](https://stackoverflow.com/questions/3777174/plotting-two-variables-as-lines-using-ggplot2-on-the-same-graph)
+
+[7] - Column drop options
+[link](https://stackoverflow.com/questions/4605206/drop-data-frame-columns-by-name)
+
+[8] - Summarising the total columns
+[link](https://dplyr.tidyverse.org/reference/summarise_all.html)
+
+[9] - Row Summation
+[link](https://www.rdocumentation.org/packages/raster/versions/2.8-4/topics/rowSums)
+
+[10] - Figure size editing 
+[link](https://stackoverflow.com/questions/34535155/figure-size-in-r-markdown)
+
