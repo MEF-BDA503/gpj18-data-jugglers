@@ -18,7 +18,6 @@ geometry: margin=0in
 
 # 1) Needed Libraries
 
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T,
                       results = "hide")
@@ -121,93 +120,52 @@ We will divide the data into two groups, financial sector companies, reel sector
 **Corrplot** is a good source for correlation table, we can see the desired relations between two values in table by looking the correlation table. In this graph we use normalized data set.
 
 "**TASK1**: Buraya korelasyon matrisi eklenecek""
-
 ```{r}
 corrValuesPrices <- cor(bist30[62:90],bist30[62:90])
+
+```
+
+
+
+```{r fig.height = 15, fig.width = 15}
+corrplot(corrValuesPrices, method = "number")
+```
+
+
+```{r fig.height = 12 , fig.width = 12}
+
 corrplot(corrValuesPrices, type = "upper", tl.pos = "td",
          method = "circle", tl.cex = 0.5, tl.col = 'black',
          order = "hclust", diag = FALSE)
 ```
 
-## 2) The Correlation Values between Volume and Price
+## 2) The Correlation Values between Volume and Price Differences
 
-"**TASK2**: Haccim ve fiyat farklarý alýnarak grafiker güncellenecek""
-
-We should investigate that is there any meaningful connection between volume values and price values. If there is, we can assuma some predictions about company stock's volumes or prices from another.
-
-First we need company names vector for table
+"**TASK2**: Hacim ve fiyat farklarý alýnarak grafikler güncellenecek.
 
 ```{r}
-companyNames <- c('GARAN','SAHOL','BIMAS','ARCLK','EREGL','YKBNK','TOASO','TUPRS','KRDMD','TTRAK','ASELS','IPEKE','KOZAA','ASYAB','ENKAI','KOZAL','DOHOL','IHLAS','KCHOL','EKGYO','TCELL','MGROS','SISE','ISCTR','VAKBN','AKBNK','PETKM','THYAO','TTKOM','HALKB')
-```
+priceDif <-data.frame(diff(as.matrix(bist30 %>% select(matches("price")))))
+volumeDif <- data.frame(diff(as.matrix(bist30 %>% select(matches("Volume")))))
 
 
-After that, we can apply correlatio between all the prices and volumes.
+corrplot(corrDif, type = "upper", tl.pos = "td",
+         method = "circle", tl.cex = 0.5, tl.col = 'black',
+         order = "hclust", diag = FALSE)
 
-```{r}
-df <- bist30
-corGaran <- cor(df$GARAN_Price,df$GARAN_Volume)
-corSahol <- cor(df$SAHOL_Price,df$SAHOL_Volume)
-corBimas <- cor(df$BIMAS_Price,df$BIMAS_Volume)
-corArclk <- cor(df$ARCLK_Price,df$ARCLK_Volume)
-corEregl <- cor(df$EREGL_Price,df$EREGL_Volume)
-corYkbnk <- cor(df$`YKBNK _Price`,df$`YKBNK _Volume`)
-corToaso <- cor(df$TOASO_Price,df$TOASO_Volume)
-corTuprs <- cor(df$TUPRS_Price,df$TUPRS_Volume)
-corKrdmd <- cor(df$KRDMD_Price,df$KRDMD_Volume)
-corTtrak <- cor(df$TTRAK_Price,df$TTKOM_Volume)
-corAsels <- cor(df$ASELS_Price,df$ASELS_Volume)
-corIpeke <- cor(df$IPEKE_Price,df$IPEKE_Volume)
-corKozaa <- cor(df$KOZAA_Price,df$KOZAA_Volume)
-corAsyab <- cor(df$ASYAB_Price,df$ASYAB_Volume)
-corEnkai <- cor(df$ENKAI_Price,df$ENKAI_Volume)
-corKozal <- cor(df$KOZAL_Price,df$KOZAL_Volume)
-corDohol <- cor(df$DOHOL_Price,df$DOHOL_Volume)
-corIhlas <- cor(df$IHLAS_Price,df$IHLAS_Volume)
-corKchol <- cor(df$KCHOL_Price,df$KCHOL_Volume)
-corEgkyo <- cor(df$EKGYO_Price,df$EKGYO_Volume)
-corTcell <- cor(df$TCELL_Price,df$TCELL_Volume)
-corMgros <- cor(df$MGROS_Price,df$MGROS_Volume)
-corSise <- cor(df$SISE_Price,df$SISE_Volume)
-corIsctr <- cor(df$ISCTR_Price,df$ISCTR_Volume)
-corVakbn <- cor(df$VAKBN_Price,df$VAKBN_Volume)
-corAkbnk <- cor(df$AKBNK_Price,df$AKBNK_Volume)
-corPetkm <- cor(df$PETKM_Price,df$PETKM_Volume)
-corThyao <- cor(df$THYAO_Price,df$THYAO_Volume)
-corTtkom <- cor(df$TTKOM_Price,df$TTKOM_Volume)
-corHalkb <- cor(df$HALKB_Price,df$HALKB_Volume)
 
-corVec <- c(corGaran,corSahol,corBimas,corArclk,corEregl,corYkbnk,corToaso,corTuprs,corKrdmd,corTtrak,corAsels,corIpeke,corKozaa,corAsyab,corEnkai,corKozal,corDohol,corIhlas,corKchol,corEgkyo,corTcell,corMgros,corSise,corIsctr,corVakbn,corAkbnk,corPetkm,corThyao,corTtkom,corHalkb )
+
 ```
 
 
 ```{r}
-corrTable <- melt(data.frame(companyNames ,corVec))
-corrTable$variable <- NULL
-corrTable
+
+priceTotal <- rowSums(priceDif)
+volumeTotal <- rowSums(volumeDif)
+corrDif <- cor(priceDif,volumeDif)
+corrTotal <- cor(priceTotal,volumeTotal)
+
+print(corrTotal)
 ```
-
-
-
-**CorVec** variable keeps the correlation values between prices and volumes . There are negative and positive values. The absolute value of correlation means the relationship of these two variables are more predictable and more meaningfull for future actions. Thus, investigating these correlation values could help for regression values to seek which stocks are the best for prediction.
-
-```{r}
-
-corrTable %>% arrange(desc(value)) %>%
-ggplot( aes(x=companyNames, y=value)) + 
-  geom_bar(stat="identity", width=.5, fill="tomato3") + 
-  labs(title="Ordered Bar Chart", 
-       subtitle="Correlation Values", 
-       caption="Correlation graph") + 
-  theme(axis.text.x = element_text(angle=65, vjust=0.6))
-```
-
-Arranging to absolute values
-
-```{r}
-corrTable %>% arrange(desc(abs(value)))
-```
-
 
 
 ## 3) General Template for Highly Correlated Values
@@ -928,3 +886,9 @@ ggplot(WAvgTable, aes(x = bist30.Dates)) +
 
 [9] - Row Summation
 [link](https://www.rdocumentation.org/packages/raster/versions/2.8-4/topics/rowSums)
+
+[10] - Figure size editing 
+[link](https://stackoverflow.com/questions/34535155/figure-size-in-r-markdown)
+
+[11] - Difference of Row Values
+[link](https://stackoverflow.com/questions/16212097/r-how-can-i-calculate-difference-between-rows-in-a-data-frame)
