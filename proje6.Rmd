@@ -127,7 +127,6 @@ We will divide the data into two groups, financial sector companies, reel sector
 
 **Corrplot** is a good source for correlation table, we can see the desired relations between two values in table by looking the correlation table. In this graph we use normalized data set.
 
-"**TASK1**: Buraya korelasyon matrisi eklenecek""
 ```{r}
 norms <- bist30[62:90]
 corrValuesPrices <- cor(norms,norms)
@@ -157,7 +156,6 @@ corrplot(corrValuesPrices, type = "upper", tl.pos = "td",
 
 ## 2) The Correlation Values between Volume and Price Differences
 
-"**TASK2**: Hacim ve fiyat farklarý alýnarak grafikler güncellenecek.
 
 ```{r}
 # First I take the first 2055 row of prices then last 2055
@@ -623,7 +621,6 @@ kmeans(annual_average, 3)
 
 Structuring the table for **kmeans**.
 
-**TASK3:** Aþaðýdaki kod çalýþtýrýlacak, çalýþýrsa bir sonrakichunk kaldýrýlacak.
 
 ```{r}
 bist30_cluster <- kmeans(annual_average,centers=3)
@@ -677,8 +674,6 @@ fviz_cluster(bist30_cluster, data = annual_average)
 
 
 
-**TASK4** Önce distance lara göre dersteki grafik denenecek, olmadý sort edilip grafik güncellenecek.
-
 ```{r}
 ggplot(clusterFrame, aes(x =Groups , y = seq(1,30,1), colour = Groups,fill = Groups)) + geom_text(label = clusterFrame$Companies) + 
   xlab(label = "Numbers of Groups") +
@@ -701,7 +696,6 @@ Consequently, we can assume **Aselsan** as an outlier, so the result of k-means 
 
 We can measure the change in prices by looking last and first 3 months average differences. The differences between last and first can show us what the yileds would be beneficial if we purchase these stocks at 2011.
 
-**TASK5** momentum geçen yerler yield olarak güncellenecek, grafik altýndaki rakamlar yüzdeye çevrilecek.
 
 ```{r}
 df1 <- head(bist30,n= 90)
@@ -741,7 +735,6 @@ yieldsTable %>%
 
 We can find the max and min values of prices and calculate the measure of it. This will show us the a possible income for investor how to reach a maxiumum profit.
 
-**TASK 6** her bir hissenin max ve min tarihleri tablo olarak verilecek, min tarihi max tan büyük olanlar varsa hem tabloda hem de grafikten bu hisseleri çýkar.
 
 ```{r}
 maxVal <- norms[1028:2056,] %>% summarise_all("max") %>%
@@ -901,7 +894,6 @@ After all, banking sector is below of the other sectors by means of price values
 
 ## 9.2) Weighted Average
 
-**TASK 10:** Aðýrlýklandýrmaa bankacýlýk ve reel sektör için bakýlacak
 
 ```{r}
 prices <- bist30[62:91] %>%
