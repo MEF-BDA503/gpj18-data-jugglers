@@ -4,16 +4,18 @@ author: "Data Jugglers"
 date: "November 21, 2018"
 output:
   html_document:
-    toc: true
-    toc_float: true
-    theme: sandstone
-    highlight: kate
     df_print: paged
-    fig_width: 11
+    fig_crop: no
     fig_height: 7
-    fig_crop: false
-classoption: landscape
+    fig_width: 11
+    highlight: kate
+    theme: sandstone
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
 geometry: margin=0in
+classoption: landscape
 ---
 
 # 1) Needed Libraries
@@ -136,6 +138,7 @@ We need company names after
 
 ```{r}
 companyNames <- c('GARAN','SAHOL','BIMAS','ARCLK','EREGL','YKBNK','TOASO','TUPRS','KRDMD','TTRAK','ASELS','IPEKE','KOZAA','ASYAB','ENKAI','KOZAL','DOHOL','IHLAS','KCHOL','EKGYO','TCELL','MGROS','SISE','ISCTR','VAKBN','AKBNK','PETKM','THYAO','TTKOM','HALKB')
+
 ```
 
 
@@ -467,37 +470,32 @@ which(bist30$Dates == end)
 We could buy a stock in 15 days and observe the first 3 months to sell the stock in a one year. So what might change in this period?
 
 ```{r}
-first3Month1 <- bist30[1:15,] %>% summarise_all(mean) %>%
-  select(matches("norm"))
-first3Month2 <- bist30[75:90,] %>% summarise_all(mean) %>%
-  select(matches("norm"))
 
-year1 <- bist30[1:90,] %>% summarise_all(mean) %>%
-  select(matches("norm"))
+first3Month1 <- norms[1:15,] %>% summarise_all(mean)
 
-year2 <- bist30[275:365,] %>% summarise_all(mean) %>%
-  select(matches("norm"))
+first3Month2 <- norms[75:90,] %>% summarise_all(mean) 
+
+year1 <- norms[1:90,] %>% summarise_all(mean) 
+
+year2 <- norms[275:365,] %>% summarise_all(mean) 
 
 quarter <- first3Month2 - first3Month1
 year <- year2 - year1
 
 quarter <- as.data.frame(t(quarter))
 year <- as.data.frame(t(year))
-total <- data.frame(companyNames,quarter,year)
+total <- as.data.frame(companyNames,quarter$V1,year$V1)
 names(total) <- c("companyNames","quarterDif","yearDif")
-total
+
 ```
+
+
 
 ```{r}
 p1 <- total %>% arrange(quarterDif)
 p2 <- total %>% arrange(yearDif)
 ```
 
-
-```{r}
-x <- colSums(year)
-x
-```
 
 
 First three month difference in stocks.
@@ -516,11 +514,55 @@ ggplot(p1,aes(x = reorder(companyNames, yearDif),yearDif,fill = companyNames)) +
 cor(total$quarterDif[1:5],total$yearDif[1:5])
 ```
 
+correlation: $-0.3881355$
+
 ```{r}
 cor(total$quarterDif[8:30],total$yearDif[8:30])
 ```
 
+correlation: $0.4653404$
+
 Roughly we can say the head of changing stocks are competative in stock market but others are nearly stable.
+
+We can see the how stock market react through the years
+
+```{r}
+x  <- c()
+for (i in 1:4)
+{
+first3Month1 <- norms[(0+(365*i)):(15+(365*i)),] %>% summarise_all(mean) 
+
+first3Month2 <- norms[(75+(365*i)):(90+(365*i)),] %>% summarise_all(mean) 
+
+year1 <- norms[(0+(365*i)):(90+(365*i)),] %>% summarise_all(mean) 
+
+year2 <- norms[(275+(365*i)):(365+(365*i)),] %>% summarise_all(mean) 
+
+quarter <- first3Month2 - first3Month1
+year <- year2 - year1
+
+quarter <- as.data.frame(t(quarter))
+year <- as.data.frame(t(year))
+x[i] <- colSums(year) / colSums(quarter)
+}
+x
+
+```
+
+Lets visualize this
+```{r}
+y <- c('2011','2012','2013','2014')
+yearsYield <- data.frame(x,y)
+```
+
+Visualization of this
+
+```{r}
+ggplot(yearsYield,aes(x = y,reorder(x, y),fill = y)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) 
+```
+
+
+
 
 ## 6.3) First Year Ratios of Yield
 
@@ -693,10 +735,10 @@ We can find the max and min values of prices and calculate the measure of it. Th
 **TASK 6** her bir hissenin max ve min tarihleri tablo olarak verilecek, min tarihi max tan büyük olanlar varsa hem tabloda hem de grafikten bu hisseleri çýkar.
 
 ```{r}
-maxVal <- bist30[1028:2056,] %>% summarise_all("max") %>%
+maxVal <- norms[1028:2056,] %>% summarise_all("max") %>%
   select(matches("norm")) 
 
-minVal <- bist30[0:1028,] %>% summarise_all("min") %>%
+minVal <- norms[0:1028,] %>% summarise_all("min") %>%
   select(matches("norm"))
 
 maxmin <- (maxVal-minVal) / minVal
