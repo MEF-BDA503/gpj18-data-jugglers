@@ -183,8 +183,9 @@ ggplot(ratTable,aes(x = dates,y = 0))+
   xlab("Years") + ylab("Ratio Values of Volume and Price")
 ```
 
-```{r}
+```{r echo=TRUE}
 print(cor(ratTable$pricesRat,ratTable$volumeRat))
+
 ```
 
 
@@ -279,7 +280,7 @@ ggpairs(bist30,
         lower = list(continuous = "smooth"))
 ```
 
-# 4) Linear Models {.tabset .tabset-fade .tabset-pills}
+# 5) Linear Models {.tabset .tabset-fade .tabset-pills}
 
 
 ## 1) Linear Regression Charts for These Highly Correlated Prices
@@ -417,13 +418,130 @@ Adjusted R-squared:  $0.9101$
 
 The Adjusted R-squared values are really high. That's why, we can say that, the prediction made between prices are highly elective and measurable.
 
-# 6) K-Means Analysis
+
+# 6)Analysis of Stocks
+
+Quantmod provides a number of useful features for financial modelling.
+
+## 6.1)Get quantmod
+
+
+```{r}
+if (!require("quantmod")) {
+    install.packages("quantmod")
+    library(quantmod)
+}
+```
+
+
+```{r}
+start <- as.Date("2011-01-03")
+end <- as.Date("2013-01-03")
+
+bist30 <- bist30 %>% filter(
+Dates >= start, Dates <= end
+)
+
+a = bist30["GARAN_Price_norm"]
+head(a)
+
+```
+```{r}
+library(xts)
+library(dygraphs)
+```
+
+
+
+```{r}
+start <- as.Date("2011-01-03")
+end <- as.Date("2013-01-03")
+
+which(bist30$Dates == start)
+which(bist30$Dates == end)
+
+```
+
+## 6.2) Scenario 1
+
+We could buy a stock in 15 days and observe the first 3 months to sell the stock in a one year. So what might change in this period?
+
+```{r}
+first3Month1 <- bist30[1:15,] %>% summarise_all(mean) %>%
+  select(matches("norm"))
+first3Month2 <- bist30[75:90,] %>% summarise_all(mean) %>%
+  select(matches("norm"))
+
+year1 <- bist30[1:90,] %>% summarise_all(mean) %>%
+  select(matches("norm"))
+
+year2 <- bist30[275:365,] %>% summarise_all(mean) %>%
+  select(matches("norm"))
+
+quarter <- first3Month2 - first3Month1
+year <- year2 - year1
+
+quarter <- as.data.frame(t(quarter))
+year <- as.data.frame(t(year))
+total <- data.frame(companyNames,quarter,year)
+names(total) <- c("companyNames","quarterDif","yearDif")
+total
+```
+
+```{r}
+p1 <- total %>% arrange(quarterDif)
+p2 <- total %>% arrange(yearDif)
+```
+
+
+```{r}
+x <- colSums(year)
+x
+```
+
+
+First three month difference in stocks.
+
+```{r}
+ggplot(p1,aes(x = reorder(companyNames, quarterDif),quarterDif,fill = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
+```
+
+Yearly difference of stocks
+
+```{r}
+ggplot(p1,aes(x = reorder(companyNames, yearDif),yearDif,fill = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
+```
+
+```{r}
+cor(total$quarterDif[1:5],total$yearDif[1:5])
+```
+
+```{r}
+cor(total$quarterDif[8:30],total$yearDif[8:30])
+```
+
+Roughly we can say the head of changing stocks are competative in stock market but others are nearly stable.
+
+## 6.3) First Year Ratios of Yield
+
+We can divide the differences to look for what changes may be beneficial
+
+```{r}
+difRatio <- total$yearDif / total$quarterDif
+difRatio <- data.frame(companyNames,difRatio)
+ggplot(difRatio,aes(x = reorder(companyNames, difRatio),difRatio,fill = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
+```
+
+
+
+
+# 7) K-Means Analysis
 
 We have divided the dataset into two groups as financial sector companies and real sector companies. Now we will check whether this classification is true or not by using k-means.
 
 ```{r echo=TRUE}
 #we calculate the annual average of stocks.
-annual_average<- aggregate(norms, list(format(bist30$Dates, "%Y")), mean)
+annual_average<- aggregate(bist30[,62:91], list(format(bist30$Dates, "%Y")), mean)
 View(annual_average)
 
 #get transpose of annual_average dataset. 
@@ -450,7 +568,7 @@ kmeans(annual_average, 3)
 
 
 
-## 6.1) Cluster Table
+## 7.1) Cluster Table
 
 Structuring the table for **kmeans**.
 
@@ -493,9 +611,7 @@ plot(annual_average, col = bist30_cluster$cluster)
 points(bist30_cluster$centers, col = 1:2, pch = 8, cex = 2)
 ```
 
-```{r}
-plot(bist30_cluster, data=annual_average)
-```
+
 ```{r fig.width= 12, fig.height= 12}
 data(annual_average)
 dissE <- daisy(annual_average) 
@@ -505,7 +621,7 @@ plot(sk2)
 ```
 
 ```{r}
-fviz_cluster(bist30_cluster, data = annual_average[1:8])
+fviz_cluster(bist30_cluster, data = annual_average)
 ```
 
 
@@ -519,7 +635,7 @@ ggplot(clusterFrame, aes(x =Groups , y = seq(1,30,1), colour = Groups,fill = Gro
 ```
           
 
-## 6.2) Sum of Squares
+## 7.2) Sum of Squares
 
 $$\frac{betweenSS}{totalSS} = 87.5 $$
 
@@ -528,9 +644,9 @@ $$\frac{betweenSS}{totalSS} = 87.5 $$
 Consequently, we can assume **Aselsan** as an outlier, so the result of k-means match up with our first assumption (there are two groups in bist30 stock such as real sector and financial sector) with regards to group classification.
 
 
-# 7) Comparison of Company Stocks
+# 8) Comparison of Company Stocks
 
-## 7.1) Equity Yields Comparison for the Selected Period
+## 8.1) Equity Yields Comparison for the Selected Period
 
 We can measure the change in prices by looking last and first 3 months average differences. The differences between last and first can show us what the yileds would be beneficial if we purchase these stocks at 2011.
 
@@ -545,18 +661,18 @@ averageFirst <- df1[0:61] %>% summarise_at(names(df1[0:61]), mean, na.rm = TRUE)
 averageLast <- df2[0:61] %>% summarise_at(names(df2[0:61]), mean, na.rm = TRUE) %>%
   select(matches("price"))
 
-momentums <- (averageLast - averageFirst) / averageFirst
-momentums
+yields <- (averageLast - averageFirst) / averageFirst
+yields
 ```
 
-First, we should combine the company names and momentums
+First, we should combine the company names and yields
 
 ```{r}
-df_momentums <-  as.data.frame(t(momentums))
-momentumTable <-melt(data.frame(companyNames ,df_momentums))
-momentumTable$variable <- NULL
-momentumTable$companyNames <- paste(momentumTable$companyNames,"Momentum",sep= "&")
-momentumTable %>% arrange(desc(value))
+df_yields <-  as.data.frame(t(yields))
+yieldsTable <-melt(data.frame(companyNames ,df_yields))
+yieldsTable$variable <- NULL
+yieldsTable$companyNames <- paste(yieldsTable$companyNames,"Momentum",sep= "&")
+yieldsTable %>% arrange(desc(value))
 
 ```
 
@@ -564,30 +680,36 @@ Lets visualize this
 
 ```{r}
 
-momentumTable %>%
+yieldsTable %>%
   arrange(desc(value)) %>%
   ggplot(data = ., aes(x = reorder(companyNames, value), y = value, 
     fill = companyNames, color = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
 ```
 
-## 7.2) Possible Highest Income Measure
+## 8.2) Possible Highest Income Measure
 
 We can find the max and min values of prices and calculate the measure of it. This will show us the a possible income for investor how to reach a maxiumum profit.
 
 **TASK 6** her bir hissenin max ve min tarihleri tablo olarak verilecek, min tarihi max tan büyük olanlar varsa hem tabloda hem de grafikten bu hisseleri çýkar.
 
 ```{r}
-
-maxVal <- bist30 %>% summarise_all("max") %>%
+maxVal <- bist30[1028:2056,] %>% summarise_all("max") %>%
   select(matches("norm")) 
 
-minVal <- bist30 %>% summarise_all("min") %>%
+minVal <- bist30[0:1028,] %>% summarise_all("min") %>%
   select(matches("norm"))
 
-
 maxmin <- (maxVal-minVal) / minVal
-maxmin
+
 ```
+
+First we should look at min and max values dates to assure that max valua is later than min value.
+
+```{r}
+dim(bist30)
+```
+
+
 
 Then, we can turn this into a usable table
 
@@ -610,7 +732,7 @@ maxminTable %>%
 
 
 
-## 7.3) Traded Value of Equities
+## 8.3) Traded Value of Equities
 
 **TAKS7**: Economic Volume ifadeleri yerine Traded Value yazýlacak
 
@@ -637,7 +759,7 @@ tradedValue %>%
     fill = companyNames, color = companyNames)) + geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle=65, vjust=0.6)) + coord_flip()
 ```
 
-## 7.4) Correlation of Economic Value and Momentums
+## 8.4) Correlation of Traded Value and Momentums
 **TAKS9**: Deðerlendir, çýkarabilirsin
 
 ```{r eval=FALSE, include=FALSE}
@@ -651,9 +773,9 @@ Correlation: $-0.03551822$
 
 The information about companies and their stocks' purchase has a correlation nearly -0.1 which is too low to guess about it. That's why, economic values of companies are not good parameter for price predictions.
 
-# 8) General Comperasion of Two Sector Banks and Others
+# 9) General Comperasion of Two Sector Banks and Others
 
-## 8.1) Basic Average
+## 9.1) Basic Average
 
 First of all, we select the 6 banks from banking sector
 
@@ -726,7 +848,7 @@ ggplot(CompanyPrices, aes(x = Dates)) +
 
 After all, banking sector is below of the other sectors by means of price values.
 
-## 8.2) Weighted Average
+## 9.2) Weighted Average
 
 **TASK 10:** Aðýrlýklandýrmaa bankacýlýk ve reel sektör için bakýlacak
 
@@ -793,7 +915,7 @@ ggplot(WAvgTable, aes(x = bist30.Dates)) +
 
 
 
-# 9) Conclusion
+# 10) Conclusion
 
   * Kmeans shows us which prices have highly momentum and which prices have lower momentum. Aselsan is the outlier because of its highly increase in price to the normalized value. Then, group 2 have high momenum then 3 group. We can deduce that, group 1 and group 2 stocks would be the best options for inverstors to get high income return.
   
@@ -812,7 +934,7 @@ ggplot(WAvgTable, aes(x = bist30.Dates)) +
   
   * The banking sector is below the averages of other sectors such as heavy industry and similar company stocks. This is according to economic volume of companies and generally these banks belongs main companies which focuses on other sectors as KOC,SABANCI etc. These companies creates banks in order to supply their main job area. That's why we cannot expect that the stocks of their banks could be higher than their heavy industry companies logically.
    
-# 10) References
+# 11) References
 
 [1] - Correlation Graphs [link](https://www.datacamp.com/community/blog/r-correlation-tutorial)
 
