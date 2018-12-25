@@ -482,11 +482,20 @@ year2 <- norms[275:365,] %>% summarise_all(mean)
 quarter <- first3Month2 - first3Month1
 year <- year2 - year1
 
-quarter <- as.data.frame(t(quarter))
-year <- as.data.frame(t(year))
-total <- as.data.frame(companyNames,quarter$V1,year$V1)
-names(total) <- c("companyNames","quarterDif","yearDif")
 
+
+```
+
+```{r}
+companyNames <- data.frame(companyNames)
+```
+
+
+```{r}
+quarterNew <- data.frame(t(quarter))
+yearNew <- data.frame(t(year))
+total <- data.frame(companyNames$companyNames,quarterNew$t.quarter.,yearNew$t.year.)
+names(total) <- c("companyNames","quarterDif","yearDif")
 ```
 
 
@@ -524,7 +533,7 @@ correlation: $0.4653404$
 
 Roughly we can say the head of changing stocks are competative in stock market but others are nearly stable.
 
-We can see the how stock market react through the years
+We can see the how stock market react through the years. These years can be explained as risky or not risky years by means of investment strategy.
 
 ```{r}
 x  <- c()
@@ -549,7 +558,7 @@ x
 
 ```
 
-Lets visualize this
+Lets build the data frame
 ```{r}
 y <- c('2011','2012','2013','2014')
 yearsYield <- data.frame(x,y)
