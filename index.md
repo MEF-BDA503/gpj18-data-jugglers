@@ -1,3 +1,12 @@
+## Group Members
+
+* Barış Can Tayiz
+* Can Koyutürk
+* Kadir Kemal Dursun
+* Murat Orhan
+* Mustafa Yıldız
+
+
 The Analyze of Turkish BlueChip Stocks
 
 Final Project [Click here](Project5.html)
