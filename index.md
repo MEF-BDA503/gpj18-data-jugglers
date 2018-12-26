@@ -15,7 +15,7 @@ Shiny Source Code [Click here](Shiny.R)
 
 Shiny [Click here](https://dursunk.shinyapps.io/DataJugglers-Shiny/)
 
-Our presentation is here [Click here](Shiny.R)
+Our presentation is here [Click here](Data Jugglers.pdf)
 
 
 
